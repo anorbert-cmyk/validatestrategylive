@@ -1,28 +1,458 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { z } from "zod";
+import { nanoid } from "nanoid";
+import { TRPCError } from "@trpc/server";
+import { notifyOwner } from "./_core/notification";
+
+import {
+  createAnalysisSession,
+  getAnalysisSessionById,
+  updateAnalysisSessionStatus,
+  getAnalysisSessionsByUserId,
+  createPurchase,
+  getPurchaseBySessionId,
+  updatePurchaseStatus,
+  getPurchasesByUserId,
+  createAnalysisResult,
+  getAnalysisResultBySessionId,
+  updateAnalysisResult,
+  getAnalysisResultsByUserId,
+  getAdminStats,
+  getTransactionHistory,
+  addAdminWallet,
+  getAdminWallets,
+} from "./db";
+
+import { Tier, getTierPrice, getTierConfig, TIER_CONFIGS, isMultiPartTier } from "../shared/pricing";
+import { generateAnalysis, generateSingleAnalysis, generateMultiPartAnalysis } from "./services/perplexityService";
+import { createPaymentIntent, isStripeConfigured } from "./services/stripeService";
+import { createCharge, isCoinbaseConfigured } from "./services/coinbaseService";
+import { verifyAdminSignature, checkAdminStatus } from "./services/walletAuthService";
+
+// Zod schemas
+const tierSchema = z.enum(["standard", "medium", "full"]);
 
 export const appRouter = router({
-    // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
+  
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
-      return {
-        success: true,
-      } as const;
+      return { success: true } as const;
     }),
   }),
 
-  // TODO: add feature routers here, e.g.
-  // todo: router({
-  //   list: protectedProcedure.query(({ ctx }) =>
-  //     db.getUserTodos(ctx.user.id)
-  //   ),
-  // }),
+  // ============ PRICING ============
+  pricing: router({
+    getTiers: publicProcedure.query(() => {
+      return Object.values(TIER_CONFIGS);
+    }),
+    getTier: publicProcedure
+      .input(z.object({ tier: tierSchema }))
+      .query(({ input }) => {
+        return getTierConfig(input.tier);
+      }),
+  }),
+
+  // ============ ANALYSIS SESSION ============
+  session: router({
+    create: publicProcedure
+      .input(z.object({
+        problemStatement: z.string().min(10).max(5000),
+        tier: tierSchema,
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const sessionId = nanoid(16);
+        
+        await createAnalysisSession({
+          sessionId,
+          userId: ctx.user?.id,
+          problemStatement: input.problemStatement,
+          tier: input.tier,
+          status: "pending_payment",
+        });
+
+        return { sessionId, tier: input.tier };
+      }),
+
+    get: publicProcedure
+      .input(z.object({ sessionId: z.string() }))
+      .query(async ({ input }) => {
+        const session = await getAnalysisSessionById(input.sessionId);
+        if (!session) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Session not found" });
+        }
+        return session;
+      }),
+
+    getMyAnalyses: protectedProcedure.query(async ({ ctx }) => {
+      const sessions = await getAnalysisSessionsByUserId(ctx.user.id);
+      const results = await getAnalysisResultsByUserId(ctx.user.id);
+      const purchases = await getPurchasesByUserId(ctx.user.id);
+      
+      return sessions.map(session => ({
+        ...session,
+        result: results.find(r => r.sessionId === session.sessionId),
+        purchase: purchases.find(p => p.sessionId === session.sessionId),
+      }));
+    }),
+  }),
+
+  // ============ PAYMENT ============
+  payment: router({
+    createStripeIntent: publicProcedure
+      .input(z.object({
+        sessionId: z.string(),
+        tier: tierSchema,
+        problemStatement: z.string(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        if (!isStripeConfigured()) {
+          throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Stripe is not configured" });
+        }
+
+        const result = await createPaymentIntent(input.tier, input.sessionId, input.problemStatement);
+        
+        if (!result.success) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: result.error });
+        }
+
+        // Create purchase record
+        await createPurchase({
+          sessionId: input.sessionId,
+          userId: ctx.user?.id,
+          tier: input.tier,
+          amountUsd: getTierPrice(input.tier).toString(),
+          paymentMethod: "stripe",
+          paymentStatus: "pending",
+          stripePaymentIntentId: result.paymentIntentId,
+        });
+
+        return {
+          clientSecret: result.clientSecret,
+          paymentIntentId: result.paymentIntentId,
+        };
+      }),
+
+    createCoinbaseCharge: publicProcedure
+      .input(z.object({
+        sessionId: z.string(),
+        tier: tierSchema,
+        problemStatement: z.string(),
+        walletAddress: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        if (!isCoinbaseConfigured()) {
+          throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Coinbase Commerce is not configured" });
+        }
+
+        const result = await createCharge(
+          input.tier,
+          input.sessionId,
+          input.problemStatement,
+          input.walletAddress
+        );
+
+        if (!result.success) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: result.error });
+        }
+
+        // Create purchase record
+        await createPurchase({
+          sessionId: input.sessionId,
+          userId: ctx.user?.id,
+          tier: input.tier,
+          amountUsd: getTierPrice(input.tier).toString(),
+          paymentMethod: "coinbase",
+          paymentStatus: "pending",
+          coinbaseChargeId: result.chargeId,
+          coinbaseChargeCode: result.code,
+          walletAddress: input.walletAddress,
+        });
+
+        return {
+          chargeId: result.chargeId,
+          code: result.code,
+          hostedUrl: result.hostedUrl,
+        };
+      }),
+
+    getStatus: publicProcedure
+      .input(z.object({ sessionId: z.string() }))
+      .query(async ({ input }) => {
+        const purchase = await getPurchaseBySessionId(input.sessionId);
+        return purchase ? { status: purchase.paymentStatus } : null;
+      }),
+
+    // Called after successful payment to trigger analysis
+    confirmAndStartAnalysis: publicProcedure
+      .input(z.object({ sessionId: z.string() }))
+      .mutation(async ({ input, ctx }) => {
+        const session = await getAnalysisSessionById(input.sessionId);
+        if (!session) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Session not found" });
+        }
+
+        const purchase = await getPurchaseBySessionId(input.sessionId);
+        if (!purchase || purchase.paymentStatus !== "completed") {
+          throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Payment not completed" });
+        }
+
+        // Update session status
+        await updateAnalysisSessionStatus(input.sessionId, "processing");
+
+        // Create initial result record
+        await createAnalysisResult({
+          sessionId: input.sessionId,
+          userId: ctx.user?.id,
+          tier: session.tier,
+          problemStatement: session.problemStatement,
+        });
+
+        // Start analysis (async)
+        startAnalysisInBackground(input.sessionId, session.problemStatement, session.tier);
+
+        // Notify owner of new purchase
+        const tierConfig = getTierConfig(session.tier);
+        await notifyOwner({
+          title: `New ${tierConfig?.displayName || session.tier} Purchase`,
+          content: `A new analysis has been purchased.\n\nTier: ${tierConfig?.displayName}\nAmount: $${getTierPrice(session.tier)}\nProblem: ${session.problemStatement.substring(0, 200)}...`,
+        });
+
+        return { status: "processing" };
+      }),
+  }),
+
+  // ============ ANALYSIS RESULTS ============
+  analysis: router({
+    getResult: publicProcedure
+      .input(z.object({ sessionId: z.string() }))
+      .query(async ({ input }) => {
+        const result = await getAnalysisResultBySessionId(input.sessionId);
+        if (!result) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Analysis result not found" });
+        }
+        return result;
+      }),
+
+    getMyResults: protectedProcedure.query(async ({ ctx }) => {
+      return await getAnalysisResultsByUserId(ctx.user.id);
+    }),
+  }),
+
+  // ============ ADMIN ============
+  admin: router({
+    checkStatus: publicProcedure
+      .input(z.object({ address: z.string() }))
+      .query(async ({ input }) => {
+        const isAdmin = await checkAdminStatus(input.address);
+        return { isAdmin };
+      }),
+
+    requestChallenge: publicProcedure
+      .input(z.object({ walletAddress: z.string() }))
+      .mutation(async ({ input }) => {
+        const isAdmin = await checkAdminStatus(input.walletAddress);
+        if (!isAdmin) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "Not an admin wallet" });
+        }
+        const challenge = nanoid(32);
+        const timestamp = Date.now();
+        return { challenge, timestamp };
+      }),
+
+    verifySignature: publicProcedure
+      .input(z.object({
+        walletAddress: z.string(),
+        signature: z.string(),
+        challenge: z.string(),
+        timestamp: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        const result = await verifyAdminSignature(
+          input.signature,
+          input.timestamp,
+          input.walletAddress
+        );
+
+        if (!result.success) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: result.error });
+        }
+
+        return { success: true };
+      }),
+
+    authenticate: publicProcedure
+      .input(z.object({
+        signature: z.string(),
+        timestamp: z.number(),
+        address: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        const result = await verifyAdminSignature(
+          input.signature,
+          input.timestamp,
+          input.address
+        );
+
+        if (!result.success) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: result.error });
+        }
+
+        return { success: true, isAdmin: true };
+      }),
+
+    getStats: publicProcedure
+      .input(z.object({
+        signature: z.string(),
+        timestamp: z.number(),
+        address: z.string(),
+      }))
+      .query(async ({ input }) => {
+        // Verify admin first
+        const authResult = await verifyAdminSignature(
+          input.signature,
+          input.timestamp,
+          input.address
+        );
+
+        if (!authResult.success) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: authResult.error });
+        }
+
+        const stats = await getAdminStats();
+        return stats;
+      }),
+
+    getTransactions: publicProcedure
+      .input(z.object({
+        signature: z.string(),
+        timestamp: z.number(),
+        address: z.string(),
+        limit: z.number().optional().default(100),
+      }))
+      .query(async ({ input }) => {
+        // Verify admin first
+        const authResult = await verifyAdminSignature(
+          input.signature,
+          input.timestamp,
+          input.address
+        );
+
+        if (!authResult.success) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: authResult.error });
+        }
+
+        const transactions = await getTransactionHistory(input.limit);
+        return { transactions, total: transactions.length };
+      }),
+
+    addWallet: publicProcedure
+      .input(z.object({
+        signature: z.string(),
+        timestamp: z.number(),
+        address: z.string(),
+        newWalletAddress: z.string(),
+        label: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        // Verify admin first
+        const authResult = await verifyAdminSignature(
+          input.signature,
+          input.timestamp,
+          input.address
+        );
+
+        if (!authResult.success) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: authResult.error });
+        }
+
+        await addAdminWallet({
+          walletAddress: input.newWalletAddress,
+          label: input.label,
+        });
+
+        return { success: true };
+      }),
+
+    getWallets: publicProcedure
+      .input(z.object({
+        signature: z.string(),
+        timestamp: z.number(),
+        address: z.string(),
+      }))
+      .query(async ({ input }) => {
+        const authResult = await verifyAdminSignature(
+          input.signature,
+          input.timestamp,
+          input.address
+        );
+
+        if (!authResult.success) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: authResult.error });
+        }
+
+        return await getAdminWallets();
+      }),
+  }),
+
+  // ============ CONFIG ============
+  config: router({
+    getPaymentConfig: publicProcedure.query(() => {
+      return {
+        stripeEnabled: isStripeConfigured(),
+        coinbaseEnabled: isCoinbaseConfigured(),
+        stripePublishableKey: process.env.VITE_STRIPE_PUBLISHABLE_KEY || "",
+      };
+    }),
+  }),
 });
+
+// Background analysis function
+async function startAnalysisInBackground(sessionId: string, problemStatement: string, tier: Tier) {
+  try {
+    console.log(`[Analysis] Starting ${tier} analysis for session ${sessionId}`);
+
+    if (isMultiPartTier(tier)) {
+      // Multi-part analysis for full tier
+      const result = await generateMultiPartAnalysis(problemStatement, {
+        onPartComplete: async (partNum, content) => {
+          console.log(`[Analysis] Part ${partNum} complete for session ${sessionId}`);
+          const partKey = `part${partNum}` as "part1" | "part2" | "part3" | "part4";
+          await updateAnalysisResult(sessionId, { [partKey]: content });
+        },
+        onComplete: async (result) => {
+          await updateAnalysisResult(sessionId, {
+            fullMarkdown: result.fullMarkdown,
+            generatedAt: new Date(result.generatedAt),
+          });
+          await updateAnalysisSessionStatus(sessionId, "completed");
+          console.log(`[Analysis] Multi-part analysis complete for session ${sessionId}`);
+        },
+        onError: async (error) => {
+          console.error(`[Analysis] Error for session ${sessionId}:`, error);
+          await updateAnalysisSessionStatus(sessionId, "failed");
+        },
+      });
+    } else {
+      // Single analysis for standard/medium tier
+      const result = await generateSingleAnalysis(problemStatement, tier as "standard" | "medium");
+      await updateAnalysisResult(sessionId, {
+        singleResult: result.content,
+        generatedAt: new Date(result.generatedAt),
+      });
+      await updateAnalysisSessionStatus(sessionId, "completed");
+      console.log(`[Analysis] Single analysis complete for session ${sessionId}`);
+    }
+  } catch (error) {
+    console.error(`[Analysis] Failed for session ${sessionId}:`, error);
+    await updateAnalysisSessionStatus(sessionId, "failed");
+  }
+}
 
 export type AppRouter = typeof appRouter;

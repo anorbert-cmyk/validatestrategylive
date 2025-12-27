@@ -136,22 +136,12 @@
 @layer components {
   /**
    * Custom container utility that centers content and adds responsive padding.
-   *
-   * This overrides Tailwind's default container behavior to:
-   * - Auto-center content (mx-auto)
-   * - Add responsive horizontal padding
-   * - Set max-width for large screens
-   *
-   * Usage: <div className="container">...</div>
-   *
-   * For custom widths, use max-w-* utilities directly:
-   * <div className="max-w-6xl mx-auto px-4">...</div>
    */
   .container {
     width: 100%;
     margin-left: auto;
     margin-right: auto;
-    padding-left: 1rem; /* 16px - mobile padding */
+    padding-left: 1rem;
     padding-right: 1rem;
   }
 
@@ -162,16 +152,180 @@
 
   @media (min-width: 640px) {
     .container {
-      padding-left: 1.5rem; /* 24px - tablet padding */
+      padding-left: 1.5rem;
       padding-right: 1.5rem;
     }
   }
 
   @media (min-width: 1024px) {
     .container {
-      padding-left: 2rem; /* 32px - desktop padding */
+      padding-left: 2rem;
       padding-right: 2rem;
-      max-width: 1280px; /* Standard content width */
+      max-width: 1280px;
     }
+  }
+
+  /* ========================================
+     AETHER LOGIC DESIGN SYSTEM
+  ======================================== */
+
+  /* Glass Morphism */
+  .glass-panel {
+    @apply bg-card/70 backdrop-blur-xl border border-border;
+    transition: all 0.3s ease;
+  }
+
+  .glass-panel:hover {
+    @apply bg-card/85 border-primary/20;
+    box-shadow: 0 8px 32px rgba(99, 102, 241, 0.08);
+  }
+
+  /* Gradient Text */
+  .text-gradient-primary {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-accent {
+    background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Tier Badges */
+  .tier-badge {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider;
+  }
+
+  .tier-badge-standard {
+    @apply bg-slate-500/20 text-slate-400 border border-slate-500/30;
+  }
+
+  .tier-badge-medium {
+    @apply bg-indigo-500/20 text-indigo-400 border border-indigo-500/30;
+  }
+
+  .tier-badge-full {
+    @apply bg-purple-500/20 text-purple-400 border border-purple-500/30;
+  }
+
+  /* Sidebar */
+  .sidebar-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200;
+    @apply text-muted-foreground hover:text-foreground hover:bg-accent;
+  }
+
+  .sidebar-item-active {
+    @apply text-primary bg-primary/10;
+  }
+
+  /* Analysis Card */
+  .analysis-card {
+    @apply relative overflow-hidden rounded-xl p-6 bg-card/70 backdrop-blur-xl border border-border;
+    transition: all 0.3s ease;
+  }
+
+  .analysis-card:hover {
+    @apply border-primary/20;
+    box-shadow: 0 8px 32px rgba(99, 102, 241, 0.08);
+  }
+
+  /* Primary Button */
+  .btn-primary {
+    @apply px-6 py-3 rounded-lg font-semibold transition-all duration-200 text-white;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
+  }
+
+  /* Secondary Button */
+  .btn-secondary {
+    @apply px-6 py-3 rounded-lg font-semibold transition-all duration-200;
+    @apply bg-card/70 border border-border text-foreground;
+  }
+
+  .btn-secondary:hover {
+    @apply bg-card/85 border-primary/20;
+  }
+
+  /* Progress Step */
+  .progress-step-indicator {
+    @apply w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold;
+    @apply bg-card border-2 border-border;
+  }
+
+  .progress-step-indicator.active {
+    @apply bg-primary border-primary text-primary-foreground;
+  }
+
+  .progress-step-indicator.completed {
+    @apply bg-emerald-500 border-emerald-500 text-white;
+  }
+
+  /* Animations */
+  @keyframes shimmer {
+    from { background-position: 0 0; }
+    to { background-position: -200% 0; }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  @keyframes blob-spin {
+    0% { transform: rotate(0deg) translate(0, 0) scale(1); }
+    33% { transform: rotate(120deg) translate(30px, -50px) scale(1.1); }
+    66% { transform: rotate(240deg) translate(-20px, 20px) scale(0.9); }
+    100% { transform: rotate(360deg) translate(0, 0) scale(1); }
+  }
+
+  .animate-shimmer {
+    animation: shimmer 2s linear infinite;
+    background-size: 200% 100%;
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-blob-spin {
+    animation: blob-spin 20s linear infinite;
+  }
+
+  /* Fractal Blobs */
+  .fractal-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(100px);
+    opacity: 0.3;
+    pointer-events: none;
+  }
+
+  .fractal-blob-1 {
+    @apply bg-indigo-500/30;
+    width: 400px;
+    height: 400px;
+    animation: blob-spin 20s linear infinite;
+  }
+
+  .fractal-blob-2 {
+    @apply bg-purple-500/30;
+    width: 350px;
+    height: 350px;
+    animation: blob-spin 25s linear infinite reverse;
+  }
+
+  .fractal-blob-3 {
+    @apply bg-cyan-500/30;
+    width: 300px;
+    height: 300px;
+    animation: blob-spin 30s linear infinite;
   }
 }

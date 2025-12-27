@@ -1,11 +1,17 @@
-import { eq } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { 
+  InsertUser, users, 
+  analysisSessions, InsertAnalysisSession, AnalysisSession,
+  purchases, InsertPurchase, Purchase,
+  analysisResults, InsertAnalysisResult, AnalysisResult,
+  adminWallets, InsertAdminWallet, AdminWallet,
+  usedSignatures, InsertUsedSignature,
+} from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
-// Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
@@ -17,6 +23,8 @@ export async function getDb() {
   }
   return _db;
 }
+
+// ============ USER FUNCTIONS ============
 
 export async function upsertUser(user: InsertUser): Promise<void> {
   if (!user.openId) {
@@ -35,7 +43,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     };
     const updateSet: Record<string, unknown> = {};
 
-    const textFields = ["name", "email", "loginMethod"] as const;
+    const textFields = ["name", "email", "loginMethod", "walletAddress"] as const;
     type TextField = (typeof textFields)[number];
 
     const assignNullable = (field: TextField) => {
@@ -85,8 +93,219 @@ export async function getUserByOpenId(openId: string) {
   }
 
   const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
-
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+export async function getUserById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+// ============ ANALYSIS SESSION FUNCTIONS ============
+
+export async function createAnalysisSession(session: InsertAnalysisSession): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(analysisSessions).values(session);
+}
+
+export async function getAnalysisSessionById(sessionId: string): Promise<AnalysisSession | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(analysisSessions).where(eq(analysisSessions.sessionId, sessionId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function updateAnalysisSessionStatus(sessionId: string, status: AnalysisSession["status"]): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(analysisSessions).set({ status }).where(eq(analysisSessions.sessionId, sessionId));
+}
+
+export async function getAnalysisSessionsByUserId(userId: number): Promise<AnalysisSession[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(analysisSessions).where(eq(analysisSessions.userId, userId)).orderBy(desc(analysisSessions.createdAt));
+}
+
+// ============ PURCHASE FUNCTIONS ============
+
+export async function createPurchase(purchase: InsertPurchase): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(purchases).values(purchase);
+}
+
+export async function getPurchaseBySessionId(sessionId: string): Promise<Purchase | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(purchases).where(eq(purchases.sessionId, sessionId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getPurchaseByStripePaymentIntent(paymentIntentId: string): Promise<Purchase | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(purchases).where(eq(purchases.stripePaymentIntentId, paymentIntentId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getPurchaseByCoinbaseChargeId(chargeId: string): Promise<Purchase | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(purchases).where(eq(purchases.coinbaseChargeId, chargeId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function updatePurchaseStatus(sessionId: string, status: Purchase["paymentStatus"], completedAt?: Date): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const updateData: Partial<Purchase> = { paymentStatus: status };
+  if (completedAt) updateData.completedAt = completedAt;
+  await db.update(purchases).set(updateData).where(eq(purchases.sessionId, sessionId));
+}
+
+export async function getPurchasesByUserId(userId: number): Promise<Purchase[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(purchases).where(eq(purchases.userId, userId)).orderBy(desc(purchases.createdAt));
+}
+
+export async function getAllPurchases(): Promise<Purchase[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(purchases).orderBy(desc(purchases.createdAt));
+}
+
+// ============ ANALYSIS RESULT FUNCTIONS ============
+
+export async function createAnalysisResult(result: InsertAnalysisResult): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(analysisResults).values(result);
+}
+
+export async function getAnalysisResultBySessionId(sessionId: string): Promise<AnalysisResult | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(analysisResults).where(eq(analysisResults.sessionId, sessionId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function updateAnalysisResult(sessionId: string, data: Partial<InsertAnalysisResult>): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(analysisResults).set(data).where(eq(analysisResults.sessionId, sessionId));
+}
+
+export async function getAnalysisResultsByUserId(userId: number): Promise<AnalysisResult[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(analysisResults).where(eq(analysisResults.userId, userId)).orderBy(desc(analysisResults.createdAt));
+}
+
+// ============ ADMIN WALLET FUNCTIONS ============
+
+export async function getAdminWallets(): Promise<AdminWallet[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(adminWallets).where(eq(adminWallets.isActive, true));
+}
+
+export async function isAdminWallet(address: string): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  const result = await db.select().from(adminWallets)
+    .where(and(eq(adminWallets.walletAddress, address.toLowerCase()), eq(adminWallets.isActive, true)))
+    .limit(1);
+  return result.length > 0;
+}
+
+export async function addAdminWallet(wallet: InsertAdminWallet): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(adminWallets).values({ ...wallet, walletAddress: wallet.walletAddress.toLowerCase() });
+}
+
+// ============ SIGNATURE FUNCTIONS (Replay Prevention) ============
+
+export async function isSignatureUsed(signature: string): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  const result = await db.select().from(usedSignatures).where(eq(usedSignatures.signature, signature)).limit(1);
+  return result.length > 0;
+}
+
+export async function markSignatureUsed(signature: string, walletAddress: string): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(usedSignatures).values({ signature, walletAddress: walletAddress.toLowerCase() });
+}
+
+// ============ STATS FUNCTIONS ============
+
+export async function getAdminStats() {
+  const db = await getDb();
+  if (!db) return null;
+
+  const completedPurchases = await db.select().from(purchases).where(eq(purchases.paymentStatus, "completed"));
+  
+  let totalRevenueUsd = 0;
+  let totalRevenueCrypto = 0;
+  let countStandard = 0;
+  let countMedium = 0;
+  let countFull = 0;
+
+  for (const p of completedPurchases) {
+    totalRevenueUsd += parseFloat(p.amountUsd as string) || 0;
+    if (p.amountCrypto) {
+      totalRevenueCrypto += parseFloat(p.amountCrypto as string) || 0;
+    }
+    if (p.tier === "standard") countStandard++;
+    else if (p.tier === "medium") countMedium++;
+    else if (p.tier === "full") countFull++;
+  }
+
+  const allPurchases = await db.select().from(purchases);
+  const pendingCount = allPurchases.filter(p => p.paymentStatus === "pending").length;
+  const completedCount = completedPurchases.length;
+
+  // Count by payment method
+  let stripeCount = 0;
+  let coinbaseCount = 0;
+  for (const p of completedPurchases) {
+    if (p.paymentMethod === "stripe") stripeCount++;
+    else if (p.paymentMethod === "coinbase") coinbaseCount++;
+  }
+
+  // Get session count for funnel
+  const allSessions = await db.select().from(analysisSessions);
+
+  return {
+    totalRevenueUsd,
+    totalRevenueCrypto,
+    totalPurchases: completedCount,
+    tierDistribution: {
+      standard: countStandard,
+      medium: countMedium,
+      full: countFull,
+    },
+    paymentMethodDistribution: {
+      stripe: stripeCount,
+      coinbase: coinbaseCount,
+    },
+    conversionFunnel: {
+      sessions: allSessions.length,
+      payments: allPurchases.length,
+      completed: completedCount,
+    },
+  };
+}
+
+export async function getTransactionHistory(limit = 100): Promise<Purchase[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(purchases).orderBy(desc(purchases.createdAt)).limit(limit);
+}
