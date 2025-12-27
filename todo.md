@@ -127,3 +127,6 @@
 
 ## Testimonials Szekció
 - [x] Egyedi, nem sablonos Testimonials szekció - kreatív dizájn
+
+## FAQ Szekció Újratervezés
+- [x] FAQ szekció átalakítása - piros helyett esztétikus dizájn
