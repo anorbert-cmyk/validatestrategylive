@@ -273,3 +273,25 @@
 - [x] Add tRPC endpoint to save email subscriptions
 - [x] Update SoftGateModal to call backend API on submit
 - [ ] Add admin view to see collected emails in Dashboard
+
+## Email Marketing System - December 29, 2024
+
+### Database Schema
+- [x] Add email_sequence_status table for tracking email progress
+- [x] Add is_priority and priority_source fields to analysis_sessions table
+
+### Email Templates & Sending
+- [x] Create Email 1: Welcome + APEX Cheat Sheet
+- [x] Create Email 2: Social Proof + Founder Story
+- [x] Create Email 3: Problem-Solution Deep Dive
+- [x] Create Email 4: Priority Bonus Offer
+- [x] Implement Resend API integration for automated email sending
+
+### Priority Tracking
+- [x] Add priority parameter handling to pricing/checkout URL
+- [x] Save priority flag when creating analysis session
+- [ ] Display priority orders in dashboard
+
+### Automation
+- [x] Create scheduled job/cron for checking and sending emails
+- [x] Implement email timing logic (immediate, day 2-3, day 5-7, day 10-14)

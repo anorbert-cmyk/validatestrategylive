@@ -45,6 +45,9 @@ export const analysisSessions = mysqlTable("analysis_sessions", {
   problemStatement: text("problemStatement").notNull(),
   tier: tierEnum.notNull(),
   status: mysqlEnum("status", ["pending_payment", "processing", "completed", "failed"]).default("pending_payment").notNull(),
+  // Priority tracking from email campaign
+  isPriority: boolean("isPriority").default(false).notNull(),
+  prioritySource: varchar("prioritySource", { length: 64 }), // e.g., "email_campaign_dec2024"
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -183,3 +186,37 @@ export const emailSubscribers = mysqlTable("email_subscribers", {
 
 export type EmailSubscriber = typeof emailSubscribers.$inferSelect;
 export type InsertEmailSubscriber = typeof emailSubscribers.$inferInsert;
+
+/**
+ * Email sequence status - tracks progress through nurturing email sequence
+ */
+export const emailSequenceStatus = mysqlTable("email_sequence_status", {
+  id: int("id").autoincrement().primaryKey(),
+  subscriberId: int("subscriberId").references(() => emailSubscribers.id).notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  // Email 1: Welcome (immediate)
+  email1SentAt: timestamp("email1SentAt"),
+  email1OpenedAt: timestamp("email1OpenedAt"),
+  email1ClickedAt: timestamp("email1ClickedAt"),
+  // Email 2: Social Proof (day 2-3)
+  email2SentAt: timestamp("email2SentAt"),
+  email2OpenedAt: timestamp("email2OpenedAt"),
+  email2ClickedAt: timestamp("email2ClickedAt"),
+  // Email 3: Problem-Solution (day 5-7)
+  email3SentAt: timestamp("email3SentAt"),
+  email3OpenedAt: timestamp("email3OpenedAt"),
+  email3ClickedAt: timestamp("email3ClickedAt"),
+  // Email 4: Priority Offer (day 10-14)
+  email4SentAt: timestamp("email4SentAt"),
+  email4OpenedAt: timestamp("email4OpenedAt"),
+  email4ClickedAt: timestamp("email4ClickedAt"),
+  // Conversion tracking
+  convertedAt: timestamp("convertedAt"),
+  conversionSessionId: varchar("conversionSessionId", { length: 64 }),
+  // Unsubscribe tracking
+  unsubscribedAt: timestamp("unsubscribedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type EmailSequenceStatus = typeof emailSequenceStatus.$inferSelect;
+export type InsertEmailSequenceStatus = typeof emailSequenceStatus.$inferInsert;

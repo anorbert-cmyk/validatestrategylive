@@ -74,6 +74,8 @@ export const appRouter = router({
         problemStatement: z.string().min(10).max(5000),
         tier: tierSchema,
         email: z.string().email().optional(),
+        isPriority: z.boolean().optional(),
+        prioritySource: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
         const sessionId = nanoid(16);
@@ -85,6 +87,8 @@ export const appRouter = router({
           problemStatement: input.problemStatement,
           tier: input.tier,
           status: "pending_payment",
+          isPriority: input.isPriority || false,
+          prioritySource: input.prioritySource,
         });
 
         return { sessionId, tier: input.tier };
@@ -330,6 +334,18 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         const result = await saveEmailSubscriber(input.email, input.source);
+        
+        // Send welcome email for new subscribers
+        if (result.isNew && result.subscriberId) {
+          try {
+            const { sendWelcomeEmail } = await import("./emailNurturing");
+            await sendWelcomeEmail(result.subscriberId, input.email);
+            console.log(`[EmailSubscriber] Welcome email sent to ${input.email}`);
+          } catch (error) {
+            console.error(`[EmailSubscriber] Failed to send welcome email to ${input.email}:`, error);
+          }
+        }
+        
         return result;
       }),
     
@@ -341,6 +357,12 @@ export const appRouter = router({
     // Admin only - get subscriber count
     getCount: protectedProcedure.query(async () => {
       return await getEmailSubscriberCount();
+    }),
+    
+    // Process email sequence (can be called via cron or manually)
+    processSequence: protectedProcedure.mutation(async () => {
+      const { runEmailSequenceCron } = await import("./emailCron");
+      return await runEmailSequenceCron();
     }),
   }),
 

@@ -353,7 +353,7 @@ export async function getTransactionHistory(limit = 100): Promise<Purchase[]> {
 
 // ============ EMAIL SUBSCRIBER FUNCTIONS ============
 
-export async function saveEmailSubscriber(email: string, source: string = "demo_gate"): Promise<{ success: boolean; isNew: boolean }> {
+export async function saveEmailSubscriber(email: string, source: string = "demo_gate"): Promise<{ success: boolean; isNew: boolean; subscriberId?: number }> {
   const db = await getDb();
   if (!db) {
     console.warn("[Database] Cannot save email subscriber: database not available");
@@ -366,16 +366,20 @@ export async function saveEmailSubscriber(email: string, source: string = "demo_
     
     if (existing.length > 0) {
       // Email already exists, just return success
-      return { success: true, isNew: false };
+      return { success: true, isNew: false, subscriberId: existing[0].id };
     }
 
     // Insert new subscriber
-    await db.insert(emailSubscribers).values({
+    const result = await db.insert(emailSubscribers).values({
       email,
       source,
     });
 
-    return { success: true, isNew: true };
+    // Get the inserted subscriber ID
+    const newSubscriber = await db.select().from(emailSubscribers).where(eq(emailSubscribers.email, email)).limit(1);
+    const subscriberId = newSubscriber[0]?.id;
+
+    return { success: true, isNew: true, subscriberId };
   } catch (error) {
     console.error("[Database] Error saving email subscriber:", error);
     return { success: false, isNew: false };

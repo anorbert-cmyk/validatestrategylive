@@ -39,10 +39,27 @@ const shortenAddress = (address: string) => {
 export default function Home() {
   const { user, isAuthenticated } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
   const [problemStatement, setProblemStatement] = useState("");
   const [selectedTier, setSelectedTier] = useState<Tier | null>(null);
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
+  
+  // Priority tracking from email campaign
+  const [isPriority, setIsPriority] = useState(false);
+  
+  // Check for priority parameter in URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const priorityParam = urlParams.get('priority');
+    if (priorityParam === 'PRIORITY') {
+      setIsPriority(true);
+      // Store in sessionStorage so it persists through checkout
+      sessionStorage.setItem('prioritySource', 'email_campaign_dec2024');
+      toast.success('Priority access activated! Your analysis will be processed first.', {
+        duration: 5000,
+      });
+    }
+  }, []);
 
   // Countdown timer state
   const [countdown] = useState("03:58:54");
@@ -153,7 +170,8 @@ export default function Home() {
 
   const createSession = trpc.session.create.useMutation({
     onSuccess: (data) => {
-      navigate(`/checkout/${data.sessionId}?tier=${selectedTier}`);
+      const priorityParam = isPriority ? '&priority=true' : '';
+      navigate(`/checkout/${data.sessionId}?tier=${selectedTier}${priorityParam}`);
     },
   });
 
@@ -162,9 +180,12 @@ export default function Home() {
       return;
     }
     setSelectedTier(tier);
+    const prioritySource = sessionStorage.getItem('prioritySource');
     createSession.mutate({
       problemStatement: problemStatement.trim(),
       tier,
+      isPriority: isPriority,
+      prioritySource: prioritySource || undefined,
     });
   };
 
