@@ -35,6 +35,31 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
+  
+  // Cron endpoint for email sequence processing (called by scheduled task)
+  app.get("/api/cron/process-emails", async (req, res) => {
+    try {
+      // Verify cron secret to prevent unauthorized access
+      const cronSecret = req.headers["x-cron-secret"] || req.query.secret;
+      const expectedSecret = process.env.CRON_SECRET || "manus-email-cron-2024";
+      
+      if (cronSecret !== expectedSecret) {
+        console.log("[Cron] Unauthorized cron request");
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      console.log("[Cron] Processing email sequence...");
+      const { runEmailSequenceCron } = await import("../emailCron");
+      const result = await runEmailSequenceCron();
+      
+      console.log(`[Cron] Email sequence completed: ${result.sent} sent, ${result.errors} errors`);
+      res.json(result);
+    } catch (error) {
+      console.error("[Cron] Email sequence error:", error);
+      res.status(500).json({ error: "Failed to process email sequence" });
+    }
+  });
+  
   // tRPC API
   app.use(
     "/api/trpc",
