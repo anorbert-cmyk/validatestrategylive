@@ -244,6 +244,19 @@ export default function Home() {
           </a>
 
           <div className="flex items-center gap-1.5 sm:gap-3 flex-wrap justify-end">
+            {/* Admin Link - only visible for admin wallet */}
+            {walletAddress && walletAddress === ADMIN_WALLET && ADMIN_WALLET && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate("/admin")}
+                className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 sm:gap-1.5 text-amber-400 hover:text-amber-300 px-2 sm:px-3"
+              >
+                <LayoutDashboard className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
+                <span className="hidden xs:inline">Admin</span>
+              </Button>
+            )}
+
             {/* Demo Analysis Link */}
             <Button
               variant="ghost"

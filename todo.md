@@ -348,3 +348,6 @@
 - [x] Test New Analysis button functionality in Demo and Dashboard pages
 - [x] Remove automatic admin redirect from homepage (only redirect on explicit wallet connect click)
 - [x] Email gate cannot be bypassed by closing modal (content locked from start, no X button)
+
+## Admin Navigation - January 2, 2025
+- [x] Add Admin link to navbar visible only for admin wallet users
