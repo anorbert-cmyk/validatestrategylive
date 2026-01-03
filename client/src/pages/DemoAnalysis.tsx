@@ -643,22 +643,32 @@ export default function DemoAnalysis() {
                       <span className="text-sm font-normal text-muted-foreground">{PART_CONFIG[2].description}</span>
                     </div>
                   </CardTitle>
-                  {isUnlocked && <CopyButton text={part3} label="Copy All" />}
                 </div>
               </CardHeader>
               <CardContent>
-                <div className={`prose prose-invert max-w-none ${!isUnlocked ? 'blur-sm select-none pointer-events-none' : ''}`}>
-                  <Streamdown>{part3}</Streamdown>
-                </div>
-                
-                {/* Figma Prompts Grid */}
-                {figmaPrompts.length > 0 && (
-                  <div className="mt-8">
-                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                      <Palette className="h-5 w-5 text-yellow-500" />
-                      10 Production-Ready Figma Prompts
-                    </h3>
-                    <div className={`grid gap-4 md:grid-cols-2 ${!isUnlocked ? 'blur-sm select-none pointer-events-none' : ''}`}>
+                {/* Figma Prompts Section - Only detailed collapsible cards */}
+                <div className="border border-yellow-500/30 rounded-xl overflow-hidden bg-gradient-to-br from-yellow-500/5 via-background to-orange-500/5">
+                  <div className="p-6 border-b border-yellow-500/20">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 flex items-center justify-center">
+                          <Palette className="h-6 w-6 text-yellow-500" />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-lg">10 Production-Ready Figma Prompts</h3>
+                          <p className="text-sm text-muted-foreground">Copy and paste directly into Figma AI</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="px-3 py-1 text-xs font-medium bg-yellow-500/20 text-yellow-500 rounded-full">
+                          High-Fidelity Design
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className={`p-6 ${!isUnlocked ? 'blur-sm select-none pointer-events-none' : ''}`}>
+                    <div className="grid gap-4 md:grid-cols-2">
                       {figmaPrompts.map((prompt, index) => (
                         <FigmaPromptCard
                           key={index}
@@ -672,7 +682,7 @@ export default function DemoAnalysis() {
                       ))}
                     </div>
                   </div>
-                )}
+                </div>
                 
                 {!isUnlocked && (
                   <div className="absolute inset-0 flex items-center justify-center">

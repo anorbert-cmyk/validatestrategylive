@@ -20,7 +20,25 @@ const defaultConfig: RateLimitConfig = {
 
 const strictConfig: RateLimitConfig = {
   windowMs: 60 * 1000, // 1 minute
-  maxRequests: 10,
+  maxRequests: 5, // Reduced from 10 for sensitive endpoints
+};
+
+// Ultra-strict config for payment endpoints (prevents payment fraud)
+const paymentConfig: RateLimitConfig = {
+  windowMs: 60 * 1000, // 1 minute
+  maxRequests: 3, // Only 3 payment attempts per minute
+};
+
+// Analysis config (Perplexity API costs money)
+const analysisConfig: RateLimitConfig = {
+  windowMs: 60 * 60 * 1000, // 1 hour
+  maxRequests: 10, // Max 10 analyses per hour per IP
+};
+
+// Email submission config (prevent spam)
+const emailConfig: RateLimitConfig = {
+  windowMs: 60 * 60 * 1000, // 1 hour
+  maxRequests: 5, // Max 5 email submissions per hour
 };
 
 /**
@@ -85,6 +103,24 @@ export const webhookRateLimit = rateLimit({
   windowMs: 60 * 1000,
   maxRequests: 50,
 });
+
+/**
+ * Payment rate limiting (ultra-strict to prevent fraud)
+ * Only 3 payment attempts per minute per IP
+ */
+export const paymentRateLimit = rateLimit(paymentConfig);
+
+/**
+ * Analysis rate limiting (protects expensive Perplexity API)
+ * Only 10 analyses per hour per IP
+ */
+export const analysisRateLimit = rateLimit(analysisConfig);
+
+/**
+ * Email submission rate limiting (prevents spam)
+ * Only 5 email submissions per hour per IP
+ */
+export const emailRateLimit = rateLimit(emailConfig);
 
 /**
  * Security headers middleware

@@ -394,3 +394,17 @@
 - [x] Add meta description to homepage (50-160 characters)
 - [x] Add meta keywords to homepage
 - [x] Add Open Graph and Twitter Card meta tags
+
+## Security & Demo Fixes - January 3, 2025
+- [ ] Strengthen rate limiting for payment endpoints (stricter limits)
+- [ ] Strengthen rate limiting for analysis API (Perplexity costs money)
+- [ ] Fix Demo Analysis Figma prompts - remove duplicate, keep only detailed collapsible version
+
+
+## Figma Prompts Display Fix - January 3, 2026
+
+### Demo Analysis Page Figma Prompts
+- [x] Remove duplicate Figma prompt display (Streamdown + FigmaPromptCard)
+- [x] Keep only detailed collapsible FigmaPromptCard components
+- [x] Match AnalysisResult.tsx styling for consistency
+- [x] Add "High-Fidelity Design" badge to Figma prompts section
