@@ -617,3 +617,9 @@
 - [x] Ensure statistics section is 2x2 grid on mobile
 - [ ] Stack pricing cards vertically with Insider first (optional enhancement)
 - [ ] Make trust badges sticky in header (optional enhancement)
+
+## SEO Fixes - January 2025
+
+### Admin Page (/admin)
+- [x] Add H1 heading to admin page (login screen + dashboard header)
+- [x] Add H2 headings to admin page sections (Tier Distribution, Payment Methods, Conversion Funnel, Transaction History)

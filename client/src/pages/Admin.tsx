@@ -231,7 +231,7 @@ export default function Admin() {
             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
               <Shield className="h-8 w-8 text-primary" />
             </div>
-            <CardTitle>Admin Access</CardTitle>
+            <h1 className="text-2xl font-semibold leading-none tracking-tight">Admin Access</h1>
             <CardDescription>
               Connect your authorized MetaMask wallet to access the admin dashboard
             </CardDescription>
@@ -300,7 +300,7 @@ export default function Admin() {
         <div className="container flex items-center justify-between h-16">
           <div className="flex items-center gap-4">
             <Shield className="h-6 w-6 text-primary" />
-            <span className="font-bold text-lg">Admin Dashboard</span>
+            <h1 className="font-bold text-lg">Admin Dashboard</h1>
             <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/30">
               <div className="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse" />
               Live
@@ -460,10 +460,10 @@ export default function Admin() {
           {/* Tier Distribution */}
           <Card className="glass-panel">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <h2 className="flex items-center gap-2 text-lg font-semibold leading-none tracking-tight">
                 <PieChart className="h-5 w-5" />
                 Tier Distribution
-              </CardTitle>
+              </h2>
             </CardHeader>
             <CardContent>
               {statsLoading ? (
@@ -510,10 +510,10 @@ export default function Admin() {
           {/* Payment Methods */}
           <Card className="glass-panel">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <h2 className="flex items-center gap-2 text-lg font-semibold leading-none tracking-tight">
                 <BarChart3 className="h-5 w-5" />
                 Payment Methods
-              </CardTitle>
+              </h2>
             </CardHeader>
             <CardContent>
               {statsLoading ? (
@@ -558,7 +558,7 @@ export default function Admin() {
         {/* Conversion Funnel */}
         <Card className="glass-panel">
           <CardHeader>
-            <CardTitle>Conversion Funnel</CardTitle>
+            <h2 className="text-lg font-semibold leading-none tracking-tight">Conversion Funnel</h2>
           </CardHeader>
           <CardContent>
             {statsLoading ? (
@@ -596,11 +596,11 @@ export default function Admin() {
         <Card className="glass-panel">
           <CardHeader>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <CardTitle className="flex items-center gap-2">
+              <h2 className="flex items-center gap-2 text-lg font-semibold leading-none tracking-tight">
                 <Calendar className="h-5 w-5" />
                 Transaction History
                 <Badge variant="secondary" className="ml-2">{filteredTransactions.length}</Badge>
-              </CardTitle>
+              </h2>
               <div className="flex items-center gap-2">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
