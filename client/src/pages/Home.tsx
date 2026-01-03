@@ -44,6 +44,9 @@ export default function Home() {
   const [selectedTier, setSelectedTier] = useState<Tier | null>(null);
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   
+  // Honeypot spam protection
+  const [honeypot, setHoneypot] = useState("");
+  
   // Priority tracking from email campaign
   const [isPriority, setIsPriority] = useState(false);
   
@@ -171,6 +174,11 @@ export default function Home() {
   });
 
   const handleStartAnalysis = (tier: Tier) => {
+    // Spam protection - if honeypot is filled, silently reject
+    if (honeypot) {
+      toast.success("Analysis started!"); // Fake success to confuse bots
+      return;
+    }
     if (!problemStatement.trim()) {
       return;
     }
@@ -188,22 +196,27 @@ export default function Home() {
     {
       question: "How does the validation process work?",
       answer:
-        "Our multi-agent AI system analyzes your problem statement through 4 distinct phases: Market Analysis, Technical Feasibility, Competitive Landscape, and Strategic Roadmap. Each phase builds on the previous, creating a comprehensive validation report.",
+        "Our state-of-the-art AI system analyzes your problem statement through 4 distinct phases: Discovery & Problem Analysis, Strategic Design & Roadmap, AI Toolkit with Figma Prompts, and Risk Assessment with Success Metrics. Each phase builds on the previous, creating a comprehensive validation report.",
     },
     {
       question: "Is my idea kept private?",
       answer:
-        "Absolutely. We use zero-knowledge architecture and never store your raw problem statements. All analysis is processed in isolated environments and results are encrypted end-to-end.",
+        "Absolutely. We use enterprise-grade security and never share your problem statements with third parties. All analysis is processed in isolated environments and results are encrypted end-to-end.",
     },
     {
       question: "What do I get in the final report?",
       answer:
-        "Depending on your tier, you receive: Executive Summary, Market Size Analysis, Competitor Matrix, Technical Architecture Recommendations, MVP Roadmap, Risk Assessment, and Actionable Next Steps.",
+        "Depending on your tier, you receive: Executive Summary, Market Size Analysis, Competitor Matrix, Technical Architecture Recommendations, 10 Production-Ready Figma Prompts, MVP Roadmap, Risk Assessment, and Actionable Next Steps.",
     },
     {
       question: "Can I upgrade my tier later?",
       answer:
         "Yes! You can upgrade any existing analysis to a higher tier at any time. You'll only pay the difference and receive the additional insights immediately.",
+    },
+    {
+      question: "What is your refund policy?",
+      answer:
+        "We provide a comprehensive demo analysis that shows exactly what you'll receive before purchase. This transparency ensures you know precisely what you're getting. Due to the immediate delivery of AI-generated content and the computational resources involved, all sales are final. We encourage you to review the demo thoroughly before purchasing.",
     },
   ];
 
@@ -240,7 +253,7 @@ export default function Home() {
             <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
               <Zap className="w-3.5 h-3.5 text-white" />
             </div>
-            <span className="font-bold text-sm tracking-tight font-mono hidden sm:inline">AETHER LOGIC</span>
+            <span className="font-bold text-sm tracking-tight font-mono hidden sm:inline">ValidateStrategy</span>
           </a>
 
           <div className="flex items-center gap-1.5 sm:gap-3 flex-wrap justify-end">
@@ -377,7 +390,7 @@ export default function Home() {
         <div className="glass-panel p-6 text-center">
           <p className="text-sm text-muted-foreground leading-relaxed font-light tracking-wide">
             <ShieldCheck className="w-4 h-4 text-primary inline mr-2" />
-            <strong className="text-foreground font-medium">Why Aether Logic?</strong> Unlike
+            <strong className="text-foreground font-medium">Why ValidateStrategy?</strong> Unlike
             generic chat bots, our engine uses a rigorous, multi-agent validation protocol to
             stress-test your ideas against real-world market constraints, giving you a
             battle-tested roadmap, not just text.
@@ -496,9 +509,23 @@ export default function Home() {
                 placeholder="// Enter your challenge here...&#10;> e.g. 'Automate my client reporting flow'&#10;> or 'Design a fintech onboarding UX'"
                 className="min-h-[150px] bg-background/50 border-border font-mono text-sm resize-none"
               />
+              
+              {/* Honeypot field - hidden from users, visible to bots */}
+              <input
+                type="text"
+                name="website"
+                value={honeypot}
+                onChange={(e) => setHoneypot(e.target.value)}
+                className="absolute -left-[9999px] opacity-0 pointer-events-none"
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+              />
 
-              <div className="flex items-center justify-between mt-4 text-xs text-muted-foreground font-mono">
-                <span>{problemStatement.length} / 2000 characters</span>
+              <div className="flex items-center justify-between mt-4 text-xs font-mono">
+                <span className={problemStatement.length < 200 ? "text-amber-400" : "text-green-400"}>
+                  {problemStatement.length} / 2000 characters {problemStatement.length < 200 && `(min. 200 recommended)`}
+                </span>
                 <span className="flex items-center gap-1">
                   <Lock className="w-3 h-3" />
                   End-to-end encrypted
@@ -645,10 +672,10 @@ export default function Home() {
                   </span>
                 </div>
                 
-                {/* Perplexity Powered Badge */}
+                {/* State-of-the-Art AI Badge */}
                 <div className="flex items-center gap-2 mb-4 px-3 py-2 bg-gradient-to-r from-cyan-950/50 to-blue-950/50 rounded-lg border border-cyan-500/20">
                   <div className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse" />
-                  <span className="text-[10px] font-mono text-cyan-400">Powered by Perplexity sonar-pro</span>
+                  <span className="text-[10px] font-mono text-cyan-400">Powered by State-of-the-Art AI Models</span>
                 </div>
 
                 <div className="mb-6">
@@ -766,7 +793,7 @@ export default function Home() {
 
           <div className="mt-12 text-center">
             <p className="text-xs text-muted-foreground font-mono">
-              Join <strong className="text-foreground">500+</strong> teams who validated their ideas with Aether Logic
+              Join <strong className="text-foreground">500+</strong> teams who validated their ideas with ValidateStrategy
             </p>
           </div>
         </div>
@@ -793,7 +820,7 @@ export default function Home() {
                   <div className="font-mono text-[10px] text-green-400 bg-green-500/10 px-2 py-1 rounded">
                     TRANSMISSION #0x7F3A
                   </div>
-                  <div className="text-[10px] text-muted-foreground font-mono">12.24.2024 :: 03:42 UTC</div>
+                  <div className="text-[10px] text-muted-foreground font-mono">01.02.2026 :: 03:42 UTC</div>
                 </div>
                 <div className="font-mono text-sm text-muted-foreground mb-4 leading-relaxed">
                   <span className="text-green-400">&gt;</span> Skeptical at first. Another AI tool, right? But the market analysis caught a competitor pivot we completely missed. <span className="text-green-400">Saved us 3 months</span> of building the wrong thing.
@@ -819,7 +846,7 @@ export default function Home() {
                   <div className="font-mono text-[10px] text-indigo-400 bg-indigo-500/10 px-2 py-1 rounded">
                     TRANSMISSION #0x9B2C
                   </div>
-                  <div className="text-[10px] text-muted-foreground font-mono">12.19.2024 :: 14:17 UTC</div>
+                  <div className="text-[10px] text-muted-foreground font-mono">12.28.2025 :: 14:17 UTC</div>
                 </div>
                 <div className="font-mono text-sm text-muted-foreground mb-4 leading-relaxed">
                   <span className="text-indigo-400">&gt;</span> Used the Syndicate tier for our Series A pitch deck research. The competitive landscape section was <span className="text-indigo-400">more thorough than our $15k consultant</span>. Not even joking.
@@ -845,7 +872,7 @@ export default function Home() {
                   <div className="font-mono text-[10px] text-amber-400 bg-amber-500/10 px-2 py-1 rounded">
                     TRANSMISSION #0x4E8D
                   </div>
-                  <div className="text-[10px] text-muted-foreground font-mono">12.15.2024 :: 09:33 UTC</div>
+                  <div className="text-[10px] text-muted-foreground font-mono">12.22.2025 :: 09:33 UTC</div>
                 </div>
                 <div className="font-mono text-sm text-muted-foreground mb-4 leading-relaxed">
                   <span className="text-amber-400">&gt;</span> Warning: this thing is addictive. Started with one analysis, now I run every new feature idea through it. <span className="text-amber-400">The ROI projections are scary accurate</span>.
@@ -871,7 +898,7 @@ export default function Home() {
                   <div className="font-mono text-[10px] text-purple-400 bg-purple-500/10 px-2 py-1 rounded">
                     TRANSMISSION #0xA1F7
                   </div>
-                  <div className="text-[10px] text-muted-foreground font-mono">12.11.2024 :: 22:08 UTC</div>
+                  <div className="text-[10px] text-muted-foreground font-mono">12.18.2025 :: 22:08 UTC</div>
                 </div>
                 <div className="font-mono text-sm text-muted-foreground mb-4 leading-relaxed">
                   <span className="text-purple-400">&gt;</span> Finally, an AI that doesn't just regurgitate generic advice. The technical feasibility report <span className="text-purple-400">identified 3 critical blockers</span> our dev team hadn't considered. Worth every cent.
@@ -952,7 +979,7 @@ export default function Home() {
           <div className="mt-12 text-center">
             <p className="text-sm text-muted-foreground mb-3">Still have questions?</p>
             <a 
-              href="mailto:support@aetherlogic.io" 
+              href="mailto:contact@validatestrategy.com" 
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-sm font-medium hover:bg-indigo-500/20 transition-colors"
             >
               <Mail className="w-4 h-4" />
@@ -970,7 +997,7 @@ export default function Home() {
               <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
                 <Zap className="w-3.5 h-3.5 text-white" />
               </div>
-              <span className="font-bold text-sm tracking-tight font-mono">AETHER LOGIC</span>
+              <span className="font-bold text-sm tracking-tight font-mono">ValidateStrategy</span>
             </div>
 
             <div className="flex items-center gap-6 text-xs text-muted-foreground">
@@ -983,7 +1010,7 @@ export default function Home() {
             </div>
 
             <p className="text-xs text-muted-foreground">
-              © 2024 Aether Logic. All rights reserved.
+              © 2026 ValidateStrategy. All rights reserved.
             </p>
           </div>
         </div>

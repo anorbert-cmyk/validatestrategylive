@@ -10,7 +10,7 @@
 @custom-variant xs (@media (--xs));
 
 /* ========================================
-   AETHER LOGIC THEME SYSTEM
+   VALIDATESTRATEGY THEME SYSTEM
    CSS Variables for Light/Dark Themes
 ======================================== */
 
@@ -57,7 +57,7 @@
 :root {
   --radius: 0.75rem;
   
-  /* Aether Logic Custom Variables */
+  /* ValidateStrategy Custom Variables */
   --bg-primary: #FFFFFF;
   --bg-secondary: #FAFAFA;
   --bg-tertiary: #F9FAFB;
@@ -115,7 +115,7 @@
   --sidebar-ring: oklch(0.488 0.243 264.376);
 }
 
-/* Dark Theme - Aether Logic Style */
+/* Dark Theme - ValidateStrategy Style */
 .dark {
   --bg-primary: #030014;
   --bg-secondary: #0f111a;

@@ -315,7 +315,7 @@ function extractFigmaPrompts(part3Content: string): Array<{number: number; title
 
 export default function DemoAnalysis() {
   const [, navigate] = useLocation();
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("part1");
   const [isExporting, setIsExporting] = useState(false);
   const [showNewAnalysisModal, setShowNewAnalysisModal] = useState(false);
   
@@ -542,18 +542,14 @@ export default function DemoAnalysis() {
             SYNDICATE
           </span>
           <span className="px-3 py-1 text-xs font-medium bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 rounded-full text-cyan-400">
-            APEX • Perplexity Powered
+            APEX • State-of-the-Art AI
           </span>
           <span className="text-xs text-muted-foreground">Demo Analysis</span>
         </div>
 
         {/* Content Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 h-auto p-1">
-            <TabsTrigger value="overview" className="text-xs sm:text-sm py-2">
-              <FileText className="h-4 w-4 mr-1 hidden sm:inline" />
-              Overview
-            </TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4 h-auto p-1">
             {PART_CONFIG.map((part) => (
               <TabsTrigger 
                 key={part.number}
@@ -566,24 +562,6 @@ export default function DemoAnalysis() {
               </TabsTrigger>
             ))}
           </TabsList>
-
-          {/* Overview Tab */}
-          <TabsContent value="overview">
-            <Card className="glass-panel">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
-                    Executive Overview
-                  </CardTitle>
-                  {isUnlocked && <CopyButton text={fullOverview} label="Copy All" />}
-                </div>
-              </CardHeader>
-              <CardContent className="prose prose-invert max-w-none">
-                <Streamdown>{fullOverview}</Streamdown>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           {/* Part 1 Tab */}
           <TabsContent value="part1">
