@@ -704,3 +704,35 @@
 ### Insider Tier (Wrong analysis function)
 - [x] Fix tier routing to use generateInsiderAnalysis for medium tier
 - [x] Ensure 2-part analysis is generated for Insider customers
+
+## Error Handling Architecture - January 2025
+
+### Phase 1: Error Taxonomy & Custom Error Classes
+- [x] Create AnalysisError base class with error codes
+- [x] Define error categories: API, Network, Validation, Timeout, RateLimit, Partial
+- [x] Implement tier-specific error contexts
+
+### Phase 2: Retry Strategies
+- [x] Implement exponential backoff for API calls
+- [x] Add circuit breaker pattern for Perplexity API
+- [x] Configure tier-specific retry limits (Observer: 2, Insider: 3, Syndicate: 5)
+
+### Phase 3: Graceful Degradation
+- [x] Handle partial results for multi-part analyses
+- [x] Implement fallback content generation
+- [x] Save partial progress to database on failure
+
+### Phase 4: User Notification System
+- [x] Real-time error status updates via polling
+- [x] Email notifications for failed analyses
+- [x] Retry option in UI for recoverable errors
+
+### Phase 5: Monitoring & Alerting
+- [x] Structured logging with error context
+- [x] Admin dashboard error metrics
+- [x] Owner notification for critical failures
+
+### Phase 6: Recovery Mechanisms
+- [x] Admin retry endpoint for failed analyses
+- [x] Automatic retry scheduler for transient failures
+- [x] Refund eligibility tracking
