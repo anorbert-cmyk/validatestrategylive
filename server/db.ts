@@ -1,7 +1,7 @@
 import { eq, desc, and, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { 
-  InsertUser, users, 
+import {
+  InsertUser, users,
   analysisSessions, InsertAnalysisSession, AnalysisSession,
   purchases, InsertPurchase, Purchase,
   analysisResults, InsertAnalysisResult, AnalysisResult,
@@ -214,26 +214,26 @@ export interface PartProgress {
 }
 
 export async function updateAnalysisPartProgress(
-  sessionId: string, 
-  partNum: 1 | 2 | 3 | 4, 
+  sessionId: string,
+  partNum: 1 | 2 | 3 | 4,
   status: ProgressStatus,
   timestamp?: Date
 ): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  
+
   const now = timestamp || new Date();
   const updateData: Record<string, unknown> = {
     currentPart: partNum,
     [`part${partNum}Status`]: status,
   };
-  
+
   if (status === "in_progress") {
     updateData[`part${partNum}StartedAt`] = now;
   } else if (status === "completed" || status === "failed") {
     updateData[`part${partNum}CompletedAt`] = now;
   }
-  
+
   await db.update(analysisResults).set(updateData).where(eq(analysisResults.sessionId, sessionId));
 }
 
@@ -297,9 +297,9 @@ export async function storeChallenge(
 ): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  
+
   const normalizedAddress = walletAddress.toLowerCase();
-  
+
   // Upsert: replace existing challenge for this wallet
   await db.insert(adminChallenges)
     .values({ walletAddress: normalizedAddress, challenge, timestamp, expiresAt })
@@ -311,19 +311,19 @@ export async function storeChallenge(
 export async function getChallenge(walletAddress: string): Promise<AdminChallenge | null> {
   const db = await getDb();
   if (!db) return null;
-  
+
   const result = await db.select()
     .from(adminChallenges)
     .where(eq(adminChallenges.walletAddress, walletAddress.toLowerCase()))
     .limit(1);
-  
+
   return result[0] || null;
 }
 
 export async function deleteChallenge(walletAddress: string): Promise<void> {
   const db = await getDb();
   if (!db) return;
-  
+
   await db.delete(adminChallenges)
     .where(eq(adminChallenges.walletAddress, walletAddress.toLowerCase()));
 }
@@ -331,11 +331,11 @@ export async function deleteChallenge(walletAddress: string): Promise<void> {
 export async function cleanupExpiredChallengesDb(): Promise<number> {
   const db = await getDb();
   if (!db) return 0;
-  
+
   const now = Date.now();
   const result = await db.delete(adminChallenges)
     .where(sql`${adminChallenges.expiresAt} < ${now}`);
-  
+
   return (result as any).affectedRows || 0;
 }
 
@@ -346,7 +346,7 @@ export async function getAdminStats() {
   if (!db) return null;
 
   const completedPurchases = await db.select().from(purchases).where(eq(purchases.paymentStatus, "completed"));
-  
+
   let totalRevenueUsd = 0;
   let totalRevenueCrypto = 0;
   let countStandard = 0;
@@ -413,12 +413,12 @@ export async function getTransactionHistory(limit = 100): Promise<Purchase[]> {
 export async function isWebhookProcessed(webhookId: string): Promise<boolean> {
   const db = await getDb();
   if (!db) return false;
-  
+
   const result = await db.select()
     .from(processedWebhooks)
     .where(eq(processedWebhooks.webhookId, webhookId))
     .limit(1);
-  
+
   return result.length > 0;
 }
 
@@ -441,7 +441,7 @@ export async function tryMarkWebhookProcessed(
     // Return false to prevent processing without idempotency guarantee
     return false;
   }
-  
+
   try {
     await db.insert(processedWebhooks).values({
       webhookId,
@@ -480,7 +480,7 @@ export async function markWebhookProcessed(
 // ============ EMAIL SUBSCRIBER FUNCTIONS ============
 
 export async function saveEmailSubscriber(
-  email: string, 
+  email: string,
   source: string = "demo_gate",
   verificationToken?: string
 ): Promise<{ success: boolean; isNew: boolean; subscriberId?: number; isVerified?: boolean }> {
@@ -493,14 +493,14 @@ export async function saveEmailSubscriber(
   try {
     // Check if email already exists
     const existing = await db.select().from(emailSubscribers).where(eq(emailSubscribers.email, email)).limit(1);
-    
+
     if (existing.length > 0) {
       // Email already exists, return with verification status
-      return { 
-        success: true, 
-        isNew: false, 
+      return {
+        success: true,
+        isNew: false,
         subscriberId: existing[0].id,
-        isVerified: existing[0].isVerified 
+        isVerified: existing[0].isVerified
       };
     }
 
@@ -536,15 +536,15 @@ export async function verifyEmailSubscriber(token: string): Promise<{ success: b
     const subscriber = await db.select().from(emailSubscribers)
       .where(eq(emailSubscribers.verificationToken, token))
       .limit(1);
-    
+
     if (subscriber.length === 0) {
       return { success: false };
     }
 
     // Update subscriber as verified
     await db.update(emailSubscribers)
-      .set({ 
-        isVerified: true, 
+      .set({
+        isVerified: true,
         verifiedAt: new Date(),
         verificationToken: null // Clear token after use
       })
@@ -582,8 +582,12 @@ export async function getEmailSubscriberCount(): Promise<number> {
 export async function getDemoAnalysisResult(): Promise<AnalysisResult | undefined> {
   const db = await getDb();
   if (!db) return undefined;
+
+  // Get demo session ID from env var with safe fallback
+  const demoSessionId = process.env.DEMO_SESSION_ID || 'test-apex-demo-LAIdJqey';
+
   // Get the demo analysis result by session ID
-  const result = await db.select().from(analysisResults).where(eq(analysisResults.sessionId, 'test-apex-demo-LAIdJqey')).limit(1);
+  const result = await db.select().from(analysisResults).where(eq(analysisResults.sessionId, demoSessionId)).limit(1);
   if (result.length > 0) return result[0];
   // Fallback: try demo-session or first result by ID
   const fallback = await db.select().from(analysisResults).where(eq(analysisResults.sessionId, 'demo-session')).limit(1);

@@ -8,9 +8,9 @@
  */
 
 import { verifyMessage } from "ethers";
-import { 
-  isAdminWallet, 
-  isSignatureUsed, 
+import {
+  isAdminWallet,
+  isSignatureUsed,
   markSignatureUsed,
   storeChallenge,
   getChallenge,
@@ -34,15 +34,15 @@ export async function generateChallenge(walletAddress: string): Promise<{ challe
   const challenge = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
   const timestamp = Date.now();
   const expiresAt = timestamp + SIGNATURE_VALIDITY_MS;
-  
+
   // Store challenge in database (DoS-resistant)
   await storeChallenge(walletAddress.toLowerCase(), challenge, timestamp, expiresAt);
-  
+
   // Clean up old challenges periodically (async, non-blocking)
-  cleanupExpiredChallengesDb().catch(err => 
+  cleanupExpiredChallengesDb().catch(err =>
     console.warn("[WalletAuth] Failed to cleanup expired challenges:", err)
   );
-  
+
   return { challenge, timestamp };
 }
 
@@ -66,7 +66,7 @@ export async function verifyAdminSignatureWithChallenge(
 ): Promise<WalletAuthResult> {
   try {
     const normalizedAddress = claimedAddress.toLowerCase();
-    
+
     // Check if we have a stored challenge for this address (from database)
     const storedChallenge = await getChallenge(normalizedAddress);
     if (!storedChallenge) {
@@ -76,7 +76,7 @@ export async function verifyAdminSignatureWithChallenge(
         error: "No challenge found. Please request a new challenge.",
       };
     }
-    
+
     // Verify challenge matches
     if (storedChallenge.challenge !== challenge || storedChallenge.timestamp !== timestamp) {
       return {
@@ -85,7 +85,7 @@ export async function verifyAdminSignatureWithChallenge(
         error: "Invalid challenge. Please request a new challenge.",
       };
     }
-    
+
     // Check timestamp validity
     const now = Date.now();
     if (now > storedChallenge.expiresAt) {
@@ -100,7 +100,7 @@ export async function verifyAdminSignatureWithChallenge(
     // Verify the signature
     const message = generateAuthMessage(challenge, timestamp);
     let recoveredAddress: string;
-    
+
     try {
       recoveredAddress = verifyMessage(message, signature);
     } catch (e) {
@@ -178,10 +178,10 @@ export async function verifyAdminSignature(
   // For getStats and getTransactions calls that use stored auth
   // We need to verify the signature was previously validated
   // Since these use the same signature, we check if it's in our used signatures
-  
+
   try {
     const normalizedAddress = claimedAddress.toLowerCase();
-    
+
     // Check timestamp validity (5 minutes)
     const now = Date.now();
     if (Math.abs(now - timestamp) > SIGNATURE_VALIDITY_MS) {
@@ -195,14 +195,12 @@ export async function verifyAdminSignature(
     // For subsequent API calls, we verify the signature was previously used (meaning it was validated)
     // This is a security measure - only previously validated signatures are accepted
     const wasUsed = await isSignatureUsed(signature);
-    
+
     if (wasUsed) {
-      // Signature was previously validated, check if address is admin
-      const isAdmin = await isAdminWallet(claimedAddress);
-      const envAdminWallet = process.env.ADMIN_WALLET_ADDRESS;
-      const isEnvAdmin = envAdminWallet && normalizedAddress === envAdminWallet.toLowerCase();
-      
-      if (isAdmin || isEnvAdmin) {
+      // Signature was previously validated, check if address is admin using consolidated function
+      const isAdmin = await checkAdminStatus(claimedAddress);
+
+      if (isAdmin) {
         return { success: true, isAdmin: true };
       }
     }
@@ -228,16 +226,16 @@ export async function verifyAdminSignature(
  */
 export async function checkAdminStatus(address: string): Promise<boolean> {
   if (!address) return false;
-  
+
   // Check database
   const isDbAdmin = await isAdminWallet(address);
   if (isDbAdmin) return true;
-  
+
   // Check environment variable
   const envAdminWallet = process.env.ADMIN_WALLET_ADDRESS;
   if (envAdminWallet && address.toLowerCase() === envAdminWallet.toLowerCase()) {
     return true;
   }
-  
+
   return false;
 }

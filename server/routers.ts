@@ -45,8 +45,8 @@ import { sendValidateStrategyEmail, isEmailConfigured } from "./services/emailSe
 import { executeApexAnalysis, isPerplexityConfigured } from "./services/perplexityApiService";
 
 // Error handling imports
-import { 
-  AnalysisError, 
+import {
+  AnalysisError,
   AnalysisErrorCode,
   ErrorCategory,
   TIER_ERROR_CONFIGS,
@@ -57,20 +57,20 @@ import {
   CircuitBreakerOpenError,
   MaxRetriesExceededError
 } from "./services/errorHandling";
-import { 
-  perplexityCircuitBreaker, 
+import {
+  perplexityCircuitBreaker,
   CircuitState
 } from "./services/retryStrategy";
-import { 
+import {
   handlePartialFailure,
   getRecoveryStatus,
   generateFallbackContent
 } from "./services/gracefulDegradation";
-import { 
+import {
   notifyAnalysisFailed,
   notifyPartialCompletion
 } from "./services/errorNotifications";
-import { 
+import {
   getDashboardData,
   getHealthStatus,
   getMetrics
@@ -144,7 +144,7 @@ const tierSchema = z.enum(["standard", "medium", "full"]);
 
 export const appRouter = router({
   system: systemRouter,
-  
+
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
@@ -178,7 +178,7 @@ export const appRouter = router({
       }))
       .mutation(async ({ input, ctx }) => {
         const sessionId = nanoid(16);
-        
+
         await createAnalysisSession({
           sessionId,
           userId: ctx.user?.id,
@@ -207,7 +207,7 @@ export const appRouter = router({
       const sessions = await getAnalysisSessionsByUserId(ctx.user.id);
       const results = await getAnalysisResultsByUserId(ctx.user.id);
       const purchases = await getPurchasesByUserId(ctx.user.id);
-      
+
       return sessions.map(session => ({
         ...session,
         result: results.find(r => r.sessionId === session.sessionId),
@@ -233,7 +233,7 @@ export const appRouter = router({
 
         const appUrl = process.env.VITE_APP_URL || 'https://rapid-apollo-manus.manus.space';
         const tierConfig = getTierConfig(input.tier);
-        
+
         const invoice = await createInvoice({
           priceAmount: getTierPrice(input.tier),
           priceCurrency: 'usd',
@@ -343,6 +343,17 @@ export const appRouter = router({
         sessionId: z.string(),
       }))
       .mutation(async ({ input }) => {
+        // SECURITY: Idempotency check - prevent double-capture on network retry/double-click
+        const existingPurchase = await getPurchaseBySessionId(input.sessionId);
+        if (existingPurchase?.paymentStatus === "completed") {
+          console.log(`[PayPal] Idempotency: session ${input.sessionId} already completed`);
+          return {
+            success: true,
+            captureId: "already_captured",
+            duplicate: true,
+          };
+        }
+
         const result = await capturePayPalOrder(input.orderId);
 
         if (!result.success) {
@@ -381,6 +392,12 @@ export const appRouter = router({
         const session = await getAnalysisSessionById(input.sessionId);
         if (!session) {
           throw new TRPCError({ code: "NOT_FOUND", message: "Session not found" });
+        }
+
+        // SECURITY: Prevent duplicate analysis starts (race condition/double-submit protection)
+        if (session.status !== "pending_payment") {
+          console.log(`[Analysis] Deduplication: session ${input.sessionId} already has status "${session.status}"`);
+          return { status: session.status as string };
         }
 
         const purchase = await getPurchaseBySessionId(input.sessionId);
@@ -456,31 +473,31 @@ export const appRouter = router({
             console.warn(`[EmailSubscriber] reCAPTCHA error for ${input.email}:`, recaptchaError);
           }
         }
-        
+
         // Import validation service
         const { validateEmail, generateVerificationToken } = await import("./services/emailValidationService");
         const { sendVerificationEmail } = await import("./services/emailService");
-        
+
         // Validate email (format + disposable check)
         const validation = validateEmail(input.email);
         if (!validation.isValid) {
-          throw new TRPCError({ 
-            code: "BAD_REQUEST", 
-            message: validation.error || "Invalid email address" 
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: validation.error || "Invalid email address"
           });
         }
-        
+
         // Generate verification token
         const verificationToken = generateVerificationToken();
-        
+
         // Save subscriber with verification token
         const result = await saveEmailSubscriber(input.email, input.source, verificationToken);
-        
+
         // If email already exists and is verified, return success
         if (!result.isNew && result.isVerified) {
           return { success: true, isNew: false, needsVerification: false, isVerified: true };
         }
-        
+
         // If email already exists but not verified, resend verification
         if (!result.isNew && !result.isVerified) {
           // Update verification token
@@ -493,7 +510,7 @@ export const appRouter = router({
             const db = await getDb();
             if (db) {
               await db.update(emailSubscribers)
-                .set({ 
+                .set({
                   verificationToken,
                   verificationSentAt: new Date()
                 })
@@ -501,11 +518,11 @@ export const appRouter = router({
             }
           }
         }
-        
+
         // Send verification email
         const appUrl = process.env.VITE_APP_URL || 'https://validatestrategy.com';
         const verificationUrl = `${appUrl}/verify-email?token=${verificationToken}`;
-        
+
         try {
           await sendVerificationEmail({
             to: input.email,
@@ -515,16 +532,16 @@ export const appRouter = router({
         } catch (error) {
           console.error(`[EmailSubscriber] Failed to send verification email to ${input.email}:`, error);
         }
-        
-        return { 
-          success: true, 
-          isNew: result.isNew, 
+
+        return {
+          success: true,
+          isNew: result.isNew,
           needsVerification: true,
           isVerified: false,
-          subscriberId: result.subscriberId 
+          subscriberId: result.subscriberId
         };
       }),
-    
+
     // Verify email with token
     verify: publicProcedure
       .input(z.object({
@@ -533,14 +550,14 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         const { verifyEmailSubscriber } = await import("./db");
         const result = await verifyEmailSubscriber(input.token);
-        
+
         if (!result.success) {
-          throw new TRPCError({ 
-            code: "BAD_REQUEST", 
-            message: "Invalid or expired verification link" 
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Invalid or expired verification link"
           });
         }
-        
+
         // Send welcome email after verification
         if (result.email) {
           try {
@@ -555,10 +572,10 @@ export const appRouter = router({
             console.error(`[EmailSubscriber] Failed to send welcome email:`, error);
           }
         }
-        
+
         return { success: true, email: result.email };
       }),
-    
+
     // Check if email is verified
     checkVerification: publicProcedure
       .input(z.object({
@@ -567,22 +584,22 @@ export const appRouter = router({
       .query(async ({ input }) => {
         const { getEmailSubscriberByEmail } = await import("./db");
         const subscriber = await getEmailSubscriberByEmail(input.email);
-        return { 
-          exists: !!subscriber, 
-          isVerified: subscriber?.isVerified || false 
+        return {
+          exists: !!subscriber,
+          isVerified: subscriber?.isVerified || false
         };
       }),
-    
+
     // Admin only - get all subscribers
     getAll: protectedProcedure.query(async () => {
       return await getAllEmailSubscribers();
     }),
-    
+
     // Admin only - get subscriber count
     getCount: protectedProcedure.query(async () => {
       return await getEmailSubscriberCount();
     }),
-    
+
     // Process email sequence (can be called via cron or manually)
     processSequence: protectedProcedure.mutation(async () => {
       const { runEmailSequenceCron } = await import("./emailCron");
@@ -787,9 +804,9 @@ export const appRouter = router({
         const subscribers = await getAllEmailSubscribers();
         const totalCount = await getEmailSubscriberCount();
         const verifiedCount = subscribers.filter(s => s.isVerified).length;
-        
-        return { 
-          subscribers, 
+
+        return {
+          subscribers,
           stats: {
             total: totalCount,
             verified: verifiedCount,
@@ -821,10 +838,10 @@ export const appRouter = router({
         const dashboardData = getDashboardData();
         const healthStatus = getHealthStatus();
         const metrics = getMetrics();
-        
+
         // Get circuit breaker status
         const circuitBreakerStats = perplexityCircuitBreaker.getStats();
-        
+
         return {
           dashboard: dashboardData,
           health: healthStatus,
@@ -858,7 +875,7 @@ export const appRouter = router({
 
         // Force reset the circuit breaker
         perplexityCircuitBreaker.forceReset();
-        
+
         return { success: true, message: "Circuit breaker reset to CLOSED state" };
       }),
 
@@ -883,7 +900,7 @@ export const appRouter = router({
 
         const historicalMetrics = await getRecentHistoricalMetrics(input.hours);
         const failureRateStats = getFailureRateStats();
-        
+
         return {
           ...historicalMetrics,
           currentFailureRate: failureRateStats,
@@ -912,7 +929,7 @@ export const appRouter = router({
         const end = new Date();
         const start = new Date(end.getTime() - input.hours * 60 * 60 * 1000);
         const errorSummary = await getErrorSummary({ start, end });
-        
+
         return { errors: errorSummary };
       }),
 
@@ -936,7 +953,7 @@ export const appRouter = router({
 
         const queueStats = await getQueueStats();
         const processorRunning = isProcessorRunning();
-        
+
         return {
           ...queueStats,
           processorRunning,
@@ -994,7 +1011,7 @@ export const appRouter = router({
       }),
 
     // ============ ANALYSIS OPERATIONS CENTER ============
-    
+
     /**
      * Get all analysis operations with filtering
      * Returns paginated list of operations with their current state
@@ -1029,12 +1046,12 @@ export const appRouter = router({
 
         // Get total count for pagination
         const allOps = await getOperations({ state: input.state, tier: input.tier });
-        
+
         return {
           operations: operations.map(op => ({
             ...op,
-            progressPercent: op.totalParts > 0 
-              ? Math.round((op.completedParts / op.totalParts) * 100) 
+            progressPercent: op.totalParts > 0
+              ? Math.round((op.completedParts / op.totalParts) * 100)
               : 0,
             tierLabel: op.tier === 'standard' ? 'Observer' : op.tier === 'medium' ? 'Insider' : 'Syndicate',
           })),
@@ -1065,7 +1082,7 @@ export const appRouter = router({
         }
 
         const details = await getOperationDetails(input.operationId);
-        
+
         if (!details) {
           throw new TRPCError({ code: "NOT_FOUND", message: "Operation not found" });
         }
@@ -1080,8 +1097,8 @@ export const appRouter = router({
         return {
           operation: {
             ...op,
-            progressPercent: op.totalParts > 0 
-              ? Math.round((op.completedParts / op.totalParts) * 100) 
+            progressPercent: op.totalParts > 0
+              ? Math.round((op.completedParts / op.totalParts) * 100)
               : 0,
             tierLabel: op.tier === 'standard' ? 'Observer' : op.tier === 'medium' ? 'Insider' : 'Syndicate',
           },
@@ -1093,7 +1110,7 @@ export const appRouter = router({
           metrics: {
             avgPartDurationMs: avgPartDuration,
             totalEventsCount: details.events.length,
-            failureEventsCount: details.events.filter(e => 
+            failureEventsCount: details.events.filter(e =>
               e.eventType === 'part_failed' || e.eventType === 'operation_failed'
             ).length,
           },
@@ -1122,7 +1139,7 @@ export const appRouter = router({
         }
 
         const operation = await getOperationBySessionId(input.sessionId);
-        
+
         if (!operation) {
           return { found: false, operation: null };
         }
@@ -1131,8 +1148,8 @@ export const appRouter = router({
           found: true,
           operation: {
             ...operation,
-            progressPercent: operation.totalParts > 0 
-              ? Math.round((operation.completedParts / operation.totalParts) * 100) 
+            progressPercent: operation.totalParts > 0
+              ? Math.round((operation.completedParts / operation.totalParts) * 100)
               : 0,
             tierLabel: operation.tier === 'standard' ? 'Observer' : operation.tier === 'medium' ? 'Insider' : 'Syndicate',
           },
@@ -1160,12 +1177,12 @@ export const appRouter = router({
         }
 
         const operations = await getRetryableOperations();
-        
+
         return {
           operations: operations.map(op => ({
             ...op,
-            progressPercent: op.totalParts > 0 
-              ? Math.round((op.completedParts / op.totalParts) * 100) 
+            progressPercent: op.totalParts > 0
+              ? Math.round((op.completedParts / op.totalParts) * 100)
               : 0,
             tierLabel: op.tier === 'standard' ? 'Observer' : op.tier === 'medium' ? 'Insider' : 'Syndicate',
             canRetry: op.retryCount < 5,
@@ -1197,16 +1214,16 @@ export const appRouter = router({
         }
 
         const result = await pauseOperation(input.operationId, input.address, input.reason);
-        
+
         if (!result.success) {
-          throw new TRPCError({ 
-            code: "BAD_REQUEST", 
-            message: result.error || "Failed to pause operation" 
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: result.error || "Failed to pause operation"
           });
         }
 
-        return { 
-          success: true, 
+        return {
+          success: true,
           message: `Operation paused successfully`,
           previousState: result.previousState,
           newState: result.newState,
@@ -1235,16 +1252,16 @@ export const appRouter = router({
         }
 
         const result = await resumeOperation(input.operationId, input.address);
-        
+
         if (!result.success) {
-          throw new TRPCError({ 
-            code: "BAD_REQUEST", 
-            message: result.error || "Failed to resume operation" 
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: result.error || "Failed to resume operation"
           });
         }
 
-        return { 
-          success: true, 
+        return {
+          success: true,
           message: `Operation resumed successfully`,
           previousState: result.previousState,
           newState: result.newState,
@@ -1274,16 +1291,16 @@ export const appRouter = router({
         }
 
         const result = await cancelOperation(input.operationId, input.address, input.reason);
-        
+
         if (!result.success) {
-          throw new TRPCError({ 
-            code: "BAD_REQUEST", 
-            message: result.error || "Failed to cancel operation" 
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: result.error || "Failed to cancel operation"
           });
         }
 
-        return { 
-          success: true, 
+        return {
+          success: true,
           message: `Operation cancelled successfully`,
           previousState: result.previousState,
           newState: result.newState,
@@ -1316,11 +1333,11 @@ export const appRouter = router({
         const result = await triggerRegeneration(input.sessionId, input.address, {
           fromPart: input.fromPart,
         });
-        
+
         if (!result.success) {
-          throw new TRPCError({ 
-            code: "BAD_REQUEST", 
-            message: result.error || "Failed to trigger regeneration" 
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: result.error || "Failed to trigger regeneration"
           });
         }
 
@@ -1329,15 +1346,15 @@ export const appRouter = router({
         if (session) {
           // Start the analysis in background
           startAnalysisInBackground(
-            input.sessionId, 
-            session.problemStatement, 
-            session.tier as Tier, 
+            input.sessionId,
+            session.problemStatement,
+            session.tier as Tier,
             session.email
           );
         }
 
-        return { 
-          success: true, 
+        return {
+          success: true,
           message: `Regeneration triggered successfully`,
           newOperationId: result.newOperationId,
         };
@@ -1393,8 +1410,8 @@ export const appRouter = router({
 
         const activeOperations = stateCounts.initialized + stateCounts.generating + stateCounts.part_completed;
         const failedOperations = stateCounts.failed;
-        const successRate = allOps.length > 0 
-          ? Math.round((stateCounts.completed / allOps.length) * 100) 
+        const successRate = allOps.length > 0
+          ? Math.round((stateCounts.completed / allOps.length) * 100)
           : 0;
 
         return {
@@ -1405,8 +1422,8 @@ export const appRouter = router({
           failedOperations,
           completedOperations: stateCounts.completed,
           successRate,
-          overallProgress: totalParts > 0 
-            ? Math.round((totalCompletedParts / totalParts) * 100) 
+          overallProgress: totalParts > 0
+            ? Math.round((totalCompletedParts / totalParts) * 100)
             : 0,
         };
       }),
@@ -1440,9 +1457,9 @@ export const appRouter = router({
       .input(z.object({ sessionId: z.string() }))
       .mutation(async ({ input }) => {
         if (!isPerplexityConfigured()) {
-          throw new TRPCError({ 
-            code: "PRECONDITION_FAILED", 
-            message: "APEX analysis is not available. Perplexity API key not configured." 
+          throw new TRPCError({
+            code: "PRECONDITION_FAILED",
+            message: "APEX analysis is not available. Perplexity API key not configured."
           });
         }
 
@@ -1452,9 +1469,9 @@ export const appRouter = router({
         }
 
         if (session.tier !== "full") {
-          throw new TRPCError({ 
-            code: "PRECONDITION_FAILED", 
-            message: "APEX analysis is only available for Syndicate tier" 
+          throw new TRPCError({
+            code: "PRECONDITION_FAILED",
+            message: "APEX analysis is only available for Syndicate tier"
           });
         }
 
@@ -1476,18 +1493,18 @@ async function startAnalysisInBackground(sessionId: string, problemStatement: st
   const startTime = Date.now();
   const tierConfig = TIER_ERROR_CONFIGS[tier];
   let partialResultsManager: PartialResultsManager | null = null;
-  
+
   // Log analysis start
   logAnalysisStart(sessionId, tier, problemStatement);
-  
+
   // Track analysis start in Operations Center (fire-and-forget, never blocks)
   trackAnalysisStart(sessionId, tier, "user");
-  
+
   // Check circuit breaker state before starting
   const circuitState = perplexityCircuitBreaker.getState();
   if (circuitState === CircuitState.OPEN) {
     console.warn(`[Analysis] Circuit breaker OPEN - queueing session ${sessionId} for retry`);
-    
+
     // Add to retry queue instead of failing immediately
     await addToRetryQueue({
       sessionId,
@@ -1499,17 +1516,17 @@ async function startAnalysisInBackground(sessionId: string, problemStatement: st
       createdAt: new Date(),
       lastError: 'Circuit breaker open - API temporarily unavailable',
     });
-    
+
     // Track queued for retry (fire-and-forget)
     trackQueuedForRetry(sessionId, 'Circuit breaker open - API temporarily unavailable');
-    
+
     // Notify user about delay (circuit breaker open)
     if (email) {
       // Use classifyError to create proper AnalysisError
       const circuitError = classifyError(new Error('API temporarily unavailable - your analysis is queued'), { sessionId, tier });
       await notifyAnalysisFailed(sessionId, tier, email, true, circuitError);
     }
-    
+
     await updateAnalysisSessionStatus(sessionId, "processing");
     return;
   }
@@ -1521,27 +1538,27 @@ async function startAnalysisInBackground(sessionId: string, problemStatement: st
       // Syndicate tier: 6-part comprehensive APEX analysis with error handling
       const totalParts = 6;
       partialResultsManager = createPartialResultsManager(sessionId, tier, totalParts);
-      
+
       const result = await generateMultiPartAnalysis(problemStatement, {
         onPartComplete: async (partNum, content) => {
           console.log(`[Analysis] Part ${partNum} complete for session ${sessionId}`);
           logPartComplete(sessionId, partNum, totalParts);
-          
+
           // Track part start for next part (fire-and-forget)
           if (partNum < totalParts) {
             trackPartStart(sessionId, partNum + 1);
           }
-          
+
           // Track successful part completion (fire-and-forget)
           trackPartComplete(sessionId, partNum, content, Date.now() - startTime);
-          
+
           // Track successful part
           partialResultsManager?.markPartComplete(partNum, content);
-          
+
           // Support all 6 parts for Syndicate tier
           const partKey = `part${partNum}` as "part1" | "part2" | "part3" | "part4" | "part5" | "part6";
           await updateAnalysisResult(sessionId, { [partKey]: content });
-          
+
           // Record metric
           recordMetric(sessionId, tier, 'part_complete', Date.now() - startTime);
         },
@@ -1551,17 +1568,17 @@ async function startAnalysisInBackground(sessionId: string, problemStatement: st
             generatedAt: new Date(result.generatedAt),
           });
           await updateAnalysisSessionStatus(sessionId, "completed");
-          
+
           // Log completion
           const duration = Date.now() - startTime;
           logAnalysisComplete(sessionId, tier, duration, true);
           recordMetric(sessionId, tier, 'success', duration);
-          
+
           // Track analysis completion (fire-and-forget)
           trackAnalysisComplete(sessionId, duration);
-          
+
           console.log(`[Analysis] 6-part Syndicate analysis complete for session ${sessionId} in ${duration}ms`);
-          
+
           // Send success email notification
           if (email && isEmailConfigured()) {
             await sendValidateStrategyEmail({
@@ -1577,19 +1594,19 @@ async function startAnalysisInBackground(sessionId: string, problemStatement: st
         },
         onError: async (error) => {
           console.error(`[Analysis] Error for session ${sessionId}:`, error);
-          
+
           // Check if we have partial results to save
           if (partialResultsManager) {
             const completedParts = partialResultsManager.getCompletedParts();
             const completionPercentage = partialResultsManager.getCompletionPercentage();
-            
+
             // Check if we have minimum parts for partial success
             const minParts = tierConfig.minPartsForPartialSuccess;
             const minPercentage = (minParts / tierConfig.expectedParts) * 100;
             if (completionPercentage >= minPercentage) {
               // We have enough for partial delivery
               console.log(`[Analysis] Saving partial results (${completionPercentage}%) for session ${sessionId}`);
-              
+
               const partialMarkdown = partialResultsManager.generatePartialMarkdown();
               await updateAnalysisResult(sessionId, {
                 fullMarkdown: partialMarkdown,
@@ -1597,22 +1614,22 @@ async function startAnalysisInBackground(sessionId: string, problemStatement: st
               });
               // Mark as completed even if partial (user can still view results)
               await updateAnalysisSessionStatus(sessionId, "completed");
-              
+
               // Log partial success
               console.log(`[Analysis] Partial success: ${completedParts.length}/${totalParts} parts completed for session ${sessionId}`);
-              
+
               // Track partial success (fire-and-forget)
               trackPartialSuccess(sessionId, completedParts.length, totalParts);
-              
+
               logAnalysisComplete(sessionId, tier, Date.now() - startTime, false, completionPercentage);
               return;
             }
           }
-          
+
           // Track failure before adding to retry queue (fire-and-forget)
           const failedPartSyndicate = partialResultsManager ? partialResultsManager.getCompletedParts().length + 1 : 1;
           trackAnalysisFailure(sessionId, error instanceof Error ? error : new Error(String(error)), failedPartSyndicate);
-          
+
           // Full failure - add to retry queue
           await handleAnalysisFailure(sessionId, tier, problemStatement, email, error, startTime);
         },
@@ -1621,27 +1638,27 @@ async function startAnalysisInBackground(sessionId: string, problemStatement: st
       // Insider tier: 2-part strategic blueprint with error handling
       const totalParts = 2;
       partialResultsManager = createPartialResultsManager(sessionId, tier, totalParts);
-      
+
       console.log(`[Analysis] Starting Insider 2-part analysis for session ${sessionId}`);
-      
+
       const result = await generateInsiderAnalysis(problemStatement, {
         onPartComplete: async (partNum, content) => {
           console.log(`[Analysis] Insider Part ${partNum} complete for session ${sessionId}`);
           logPartComplete(sessionId, partNum, totalParts);
-          
+
           // Track part start for next part (fire-and-forget)
           if (partNum < totalParts) {
             trackPartStart(sessionId, partNum + 1);
           }
-          
+
           // Track successful part completion (fire-and-forget)
           trackPartComplete(sessionId, partNum, content, Date.now() - startTime);
-          
+
           partialResultsManager?.markPartComplete(partNum, content);
-          
+
           const partKey = `part${partNum}` as "part1" | "part2";
           await updateAnalysisResult(sessionId, { [partKey]: content });
-          
+
           recordMetric(sessionId, tier, 'part_complete', Date.now() - startTime);
         },
         onComplete: async (result) => {
@@ -1650,16 +1667,16 @@ async function startAnalysisInBackground(sessionId: string, problemStatement: st
             generatedAt: new Date(result.generatedAt),
           });
           await updateAnalysisSessionStatus(sessionId, "completed");
-          
+
           const duration = Date.now() - startTime;
           logAnalysisComplete(sessionId, tier, duration, true);
           recordMetric(sessionId, tier, 'success', duration);
-          
+
           // Track analysis completion (fire-and-forget)
           trackAnalysisComplete(sessionId, duration);
-          
+
           console.log(`[Analysis] 2-part Insider analysis complete for session ${sessionId} in ${duration}ms`);
-          
+
           // Send email notification
           if (email && isEmailConfigured()) {
             await sendValidateStrategyEmail({
@@ -1675,18 +1692,18 @@ async function startAnalysisInBackground(sessionId: string, problemStatement: st
         },
         onError: async (error) => {
           console.error(`[Analysis] Insider error for session ${sessionId}:`, error);
-          
+
           // Check for partial results (at least part 1)
           if (partialResultsManager) {
             const completedParts = partialResultsManager.getCompletedParts();
             const completionPercentage = partialResultsManager.getCompletionPercentage();
-            
+
             // Check if we have minimum parts for partial success
             const minParts = tierConfig.minPartsForPartialSuccess;
             const minPercentage = (minParts / tierConfig.expectedParts) * 100;
             if (completionPercentage >= minPercentage) {
               console.log(`[Analysis] Saving partial Insider results (${completionPercentage}%) for session ${sessionId}`);
-              
+
               const partialMarkdown = partialResultsManager.generatePartialMarkdown();
               await updateAnalysisResult(sessionId, {
                 fullMarkdown: partialMarkdown,
@@ -1694,29 +1711,29 @@ async function startAnalysisInBackground(sessionId: string, problemStatement: st
               });
               // Mark as completed even if partial (user can still view results)
               await updateAnalysisSessionStatus(sessionId, "completed");
-              
+
               // Log partial success
               console.log(`[Analysis] Partial success: ${completedParts.length}/${totalParts} parts completed for session ${sessionId}`);
-              
+
               // Track partial success (fire-and-forget)
               trackPartialSuccess(sessionId, completedParts.length, totalParts);
-              
+
               logAnalysisComplete(sessionId, tier, Date.now() - startTime, false, completionPercentage);
               return;
             }
           }
-          
+
           // Track failure before adding to retry queue (fire-and-forget)
           const failedPartInsider = partialResultsManager ? partialResultsManager.getCompletedParts().length + 1 : 1;
           trackAnalysisFailure(sessionId, error instanceof Error ? error : new Error(String(error)), failedPartInsider);
-          
+
           await handleAnalysisFailure(sessionId, tier, problemStatement, email, error, startTime);
         },
       });
     } else {
       // Observer tier: Single analysis with retry wrapper
       console.log(`[Analysis] Starting Observer single analysis for session ${sessionId}`);
-      
+
       const result = await withRetry(
         async () => generateSingleAnalysis(problemStatement, "standard"),
         {
@@ -1729,23 +1746,23 @@ async function startAnalysisInBackground(sessionId: string, problemStatement: st
           },
         }
       );
-      
+
       await updateAnalysisResult(sessionId, {
         singleResult: result.content,
         generatedAt: new Date(result.generatedAt),
       });
       await updateAnalysisSessionStatus(sessionId, "completed");
-      
+
       const duration = Date.now() - startTime;
       logAnalysisComplete(sessionId, tier, duration, true);
       recordMetric(sessionId, tier, 'success', duration);
-      
+
       // Track analysis completion (fire-and-forget) - Observer is single part
       trackPartComplete(sessionId, 1, result.content, duration);
       trackAnalysisComplete(sessionId, duration);
-      
+
       console.log(`[Analysis] Observer analysis complete for session ${sessionId} in ${duration}ms`);
-      
+
       // Send email notification
       if (email && isEmailConfigured()) {
         await sendValidateStrategyEmail({
@@ -1762,38 +1779,38 @@ async function startAnalysisInBackground(sessionId: string, problemStatement: st
   } catch (error) {
     // Track failure in outer catch (fire-and-forget)
     trackAnalysisFailure(sessionId, error instanceof Error ? error : new Error(String(error)), 1);
-    
+
     await handleAnalysisFailure(sessionId, tier, problemStatement, email, error, startTime);
   }
 }
 
 // Helper function to handle analysis failures with retry queue and notifications
 async function handleAnalysisFailure(
-  sessionId: string, 
-  tier: Tier, 
-  problemStatement: string, 
-  email: string | null | undefined, 
+  sessionId: string,
+  tier: Tier,
+  problemStatement: string,
+  email: string | null | undefined,
   error: unknown,
   startTime: number
 ) {
   const tierConfig = TIER_ERROR_CONFIGS[tier];
   const duration = Date.now() - startTime;
-  
+
   // Create structured error using classifyError
-  const analysisError = error instanceof AnalysisError 
-    ? error 
+  const analysisError = error instanceof AnalysisError
+    ? error
     : classifyError(error, { sessionId, tier });
-  
+
   // Log the error
   logError(analysisError, { sessionId, tier, duration });
   recordMetric(sessionId, tier, 'failure', duration);
-  
+
   console.error(`[Analysis] Failed for session ${sessionId}:`, analysisError.message);
-  
+
   // Check if we should add to retry queue (recoverable errors only)
-  const isRetryable = analysisError.isRetryable && 
+  const isRetryable = analysisError.isRetryable &&
     analysisError.category !== ErrorCategory.FATAL;
-  
+
   if (isRetryable) {
     // Add to retry queue for automatic retry
     await addToRetryQueue({
@@ -1806,24 +1823,24 @@ async function handleAnalysisFailure(
       createdAt: new Date(),
       lastError: analysisError.message,
     });
-    
+
     await updateAnalysisSessionStatus(sessionId, "processing");
-    
+
     // Notify user that analysis is queued for retry
     if (email) {
       await notifyAnalysisFailed(sessionId, tier, email, true, analysisError);
     }
-    
+
     console.log(`[Analysis] Session ${sessionId} queued for retry`);
   } else {
     // Non-retryable error - mark as failed
     await updateAnalysisSessionStatus(sessionId, "failed");
-    
+
     // Notify user of failure
     if (email) {
       await notifyAnalysisFailed(sessionId, tier, email, false, analysisError);
     }
-    
+
     // Alert admin for high-value failures
     if (tier === 'full' || tier === 'medium') {
       await notifyOwner({
@@ -1838,9 +1855,9 @@ async function handleAnalysisFailure(
 async function startApexAnalysisInBackground(sessionId: string, problemStatement: string, email?: string | null) {
   try {
     console.log(`[APEX Analysis] Starting Perplexity-powered analysis for session ${sessionId}`);
-    
+
     await updateAnalysisSessionStatus(sessionId, "processing");
-    
+
     // Set estimated completion time (approximately 2-3 minutes for full APEX analysis)
     const estimatedCompletion = new Date(Date.now() + 3 * 60 * 1000); // 3 minutes from now
     await setEstimatedCompletion(sessionId, estimatedCompletion);
