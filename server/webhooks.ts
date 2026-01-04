@@ -17,14 +17,19 @@ import {
   getAnalysisSessionById,
   createAnalysisResult,
   getPurchaseBySessionId,
-  isWebhookProcessed,
-  markWebhookProcessed,
+  tryMarkWebhookProcessed,
 } from "./db";
 import { notifyOwner } from "./_core/notification";
 import { getTierConfig, getTierPrice, isMultiPartTier } from "../shared/pricing";
 import { generateSingleAnalysis, generateMultiPartAnalysis } from "./services/perplexityService";
 import { updateAnalysisResult, getUserById } from "./db";
 import { sendRapidApolloEmail, isEmailConfigured } from "./services/emailService";
+import {
+  trackAnalysisStart,
+  trackPartComplete,
+  trackAnalysisComplete,
+  trackAnalysisFailure,
+} from "./services/safeOperationTracker";
 
 const webhookRouter = Router();
 
@@ -58,20 +63,24 @@ webhookRouter.post("/nowpayments", async (req: Request, res: Response) => {
     console.log(`[NOWPayments Webhook] Payment ${ipnData.payment_id} status: ${paymentStatus} (${PAYMENT_STATUS_DESCRIPTIONS[paymentStatus] || 'Unknown'})`);
     console.log(`[NOWPayments Webhook] Order ID (Session): ${sessionId}`);
 
-    // SECURITY: Check if webhook was already processed (idempotency)
-    const alreadyProcessed = await isWebhookProcessed(webhookId);
-    
-    if (alreadyProcessed) {
-      console.log(`[NOWPayments Webhook] Webhook already processed (idempotency): ${webhookId}`);
-      return res.json({ received: true, status: paymentStatus, duplicate: true });
-    }
-
-    // Only process finished payments - this ensures payment is fully confirmed
+    // Only process finished or failed payments
     if (isPaymentConfirmed(paymentStatus)) {
       console.log(`[NOWPayments Webhook] Payment CONFIRMED for session: ${sessionId}`);
       
-      // Mark webhook as processed BEFORE updating purchase (atomic operation)
-      await markWebhookProcessed(webhookId, "nowpayments", sessionId, String(ipnData.payment_id), "completed");
+      // ATOMIC idempotency check - try to mark as processed first
+      // This prevents race conditions when multiple webhooks arrive simultaneously
+      const shouldProcess = await tryMarkWebhookProcessed(
+        webhookId, 
+        "nowpayments", 
+        sessionId, 
+        String(ipnData.payment_id), 
+        "completed"
+      );
+      
+      if (!shouldProcess) {
+        console.log(`[NOWPayments Webhook] Webhook already processed (idempotency): ${webhookId}`);
+        return res.json({ received: true, status: paymentStatus, duplicate: true });
+      }
       
       // Update purchase status
       await updatePurchaseStatus(sessionId, "completed", new Date());
@@ -83,8 +92,18 @@ webhookRouter.post("/nowpayments", async (req: Request, res: Response) => {
     } else if (isPaymentFailed(paymentStatus)) {
       console.log(`[NOWPayments Webhook] Payment FAILED for session: ${sessionId}`);
       
-      // Mark webhook as processed
-      await markWebhookProcessed(webhookId, "nowpayments", sessionId, String(ipnData.payment_id), "failed");
+      // ATOMIC idempotency check for failed payments too
+      const shouldProcess = await tryMarkWebhookProcessed(
+        webhookId, 
+        "nowpayments", 
+        sessionId, 
+        String(ipnData.payment_id), 
+        "failed"
+      );
+      
+      if (!shouldProcess) {
+        return res.json({ received: true, status: paymentStatus, duplicate: true });
+      }
       
       await updatePurchaseStatus(sessionId, "failed");
       await updateAnalysisSessionStatus(sessionId, "failed");
@@ -169,6 +188,8 @@ webhookRouter.post("/lemonsqueezy", async (req: Request, res: Response) => {
  * This is called ONLY after payment is fully confirmed
  */
 async function startAnalysisAfterPayment(sessionId: string) {
+  const startTime = Date.now();
+  
   try {
     const session = await getAnalysisSessionById(sessionId);
     if (!session) {
@@ -176,6 +197,9 @@ async function startAnalysisAfterPayment(sessionId: string) {
       return;
     }
 
+    // Track analysis start (fire-and-forget)
+    trackAnalysisStart(sessionId, session.tier, "system");
+    
     // Update session status to processing
     await updateAnalysisSessionStatus(sessionId, "processing");
 
@@ -205,7 +229,10 @@ async function startAnalysisAfterPayment(sessionId: string) {
     if (isMultiPartTier(session.tier)) {
       generateMultiPartAnalysis(session.problemStatement, {
         onPartComplete: async (partNum, content) => {
-          const partKey = `part${partNum}` as "part1" | "part2" | "part3" | "part4";
+          // Track part completion (fire-and-forget)
+          trackPartComplete(sessionId, partNum, content, Date.now() - startTime);
+          
+          const partKey = `part${partNum}` as "part1" | "part2" | "part3" | "part4" | "part5" | "part6";
           await updateAnalysisResult(sessionId, { [partKey]: content });
         },
         onComplete: async (result) => {
@@ -214,6 +241,9 @@ async function startAnalysisAfterPayment(sessionId: string) {
             generatedAt: new Date(result.generatedAt),
           });
           await updateAnalysisSessionStatus(sessionId, "completed");
+          
+          // Track analysis completion (fire-and-forget)
+          trackAnalysisComplete(sessionId, Date.now() - startTime);
           
           // Send email notification with magic link
           if (userEmail && isEmailConfigured()) {
@@ -230,7 +260,10 @@ async function startAnalysisAfterPayment(sessionId: string) {
             console.log(`[Webhook] Email sent to ${userEmail} for session ${sessionId}`);
           }
         },
-        onError: async () => {
+        onError: async (error) => {
+          // Track failure (fire-and-forget)
+          trackAnalysisFailure(sessionId, error instanceof Error ? error : new Error(String(error)), 1);
+          
           await updateAnalysisSessionStatus(sessionId, "failed");
         },
       });
@@ -241,6 +274,10 @@ async function startAnalysisAfterPayment(sessionId: string) {
         generatedAt: new Date(result.generatedAt),
       });
       await updateAnalysisSessionStatus(sessionId, "completed");
+      
+      // Track completion (fire-and-forget)
+      trackPartComplete(sessionId, 1, result.content, Date.now() - startTime);
+      trackAnalysisComplete(sessionId, Date.now() - startTime);
       
       // Send email notification with magic link
       if (userEmail && isEmailConfigured()) {
@@ -259,6 +296,10 @@ async function startAnalysisAfterPayment(sessionId: string) {
     }
   } catch (error) {
     console.error("[Analysis] Failed to start analysis:", error);
+    
+    // Track failure (fire-and-forget)
+    trackAnalysisFailure(sessionId, error instanceof Error ? error : new Error(String(error)), 1);
+    
     await updateAnalysisSessionStatus(sessionId, "failed");
   }
 }

@@ -7,6 +7,7 @@ import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import webhookRouter from "../webhooks";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -48,6 +49,10 @@ async function startServer() {
   }
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
+  
+  // Payment webhook handlers (NOWPayments, etc.)
+  // CRITICAL: Must be registered before tRPC middleware
+  app.use("/api/webhooks", webhookRouter);
   
   // Email tracking pixel endpoint
   app.get("/api/track/email-open/:trackingId", async (req, res) => {

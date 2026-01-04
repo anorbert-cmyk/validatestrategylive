@@ -423,17 +423,24 @@ export async function isWebhookProcessed(webhookId: string): Promise<boolean> {
 }
 
 /**
- * Mark a webhook as processed (atomic operation to prevent race conditions)
+ * Atomically check and mark a webhook as processed
+ * Returns true if this is the first time processing (should continue)
+ * Returns false if already processed (should skip)
+ * This prevents race conditions by using INSERT with unique constraint
  */
-export async function markWebhookProcessed(
+export async function tryMarkWebhookProcessed(
   webhookId: string,
   paymentProvider: string,
   sessionId: string,
   paymentId?: string,
   status: string = "completed"
-): Promise<void> {
+): Promise<boolean> {
   const db = await getDb();
-  if (!db) throw new Error("Database not available");
+  if (!db) {
+    console.error("[Webhook] Database not available - cannot ensure idempotency");
+    // Return false to prevent processing without idempotency guarantee
+    return false;
+  }
   
   try {
     await db.insert(processedWebhooks).values({
@@ -443,14 +450,31 @@ export async function markWebhookProcessed(
       paymentId,
       status,
     });
+    // Insert succeeded - this is the first time processing
+    return true;
   } catch (error: any) {
     // If unique constraint violation, webhook was already processed
-    if (error.code === "ER_DUP_ENTRY") {
+    if (error.code === "ER_DUP_ENTRY" || error.message?.includes("Duplicate entry")) {
       console.log(`[Webhook] Duplicate webhook ID detected (idempotency): ${webhookId}`);
-      return;
+      return false;
     }
+    // Re-throw other errors
     throw error;
   }
+}
+
+/**
+ * Mark a webhook as processed (legacy function for backward compatibility)
+ * @deprecated Use tryMarkWebhookProcessed for atomic idempotency
+ */
+export async function markWebhookProcessed(
+  webhookId: string,
+  paymentProvider: string,
+  sessionId: string,
+  paymentId?: string,
+  status: string = "completed"
+): Promise<void> {
+  await tryMarkWebhookProcessed(webhookId, paymentProvider, sessionId, paymentId, status);
 }
 
 // ============ EMAIL SUBSCRIBER FUNCTIONS ============

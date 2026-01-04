@@ -223,7 +223,7 @@ export const appRouter = router({
       .input(z.object({
         sessionId: z.string(),
         tier: tierSchema,
-        problemStatement: z.string(),
+        problemStatement: z.string().min(10).max(10000),
         email: z.string().email().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
@@ -293,7 +293,7 @@ export const appRouter = router({
       .input(z.object({
         sessionId: z.string(),
         tier: tierSchema,
-        problemStatement: z.string(),
+        problemStatement: z.string().min(10).max(10000),
         walletAddress: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
@@ -306,7 +306,7 @@ export const appRouter = router({
       .input(z.object({
         sessionId: z.string(),
         tier: tierSchema,
-        problemStatement: z.string(),
+        problemStatement: z.string().min(10).max(10000),
       }))
       .mutation(async ({ input, ctx }) => {
         if (!isPayPalConfigured()) {
