@@ -362,22 +362,22 @@ export default function Home() {
           <div className="text-center mb-8">
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter mb-6 leading-[0.9]">
               <span className="block text-foreground">STOP GUESSING.</span>
-              <span className="block text-primary">START SCALING.</span>
+              <span className="block text-primary">VALIDATE STRATEGY.</span>
             </h1>
           </div>
 
           {/* Terminal-Style Subheadline */}
           <div className="max-w-2xl mx-auto mb-8">
             <div className="border border-border bg-card/50 p-4 font-mono text-sm">
-              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-border/50">
+              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-border/50" aria-hidden="true">
                 <div className="w-2 h-2 rounded-full bg-red-500" />
                 <div className="w-2 h-2 rounded-full bg-yellow-500" />
                 <div className="w-2 h-2 rounded-full bg-green-500" />
                 <span className="text-[10px] text-muted-foreground ml-2">validate_strategy.sh</span>
               </div>
-              <p className="text-muted-foreground">
-                <span className="text-primary">$</span> Get boardroom-ready product strategy and UX validation in <span className="text-foreground font-medium">24 hours</span>.
-              </p>
+              <h2 className="text-muted-foreground text-base md:text-lg font-normal m-0 p-0">
+                <span className="text-primary">$</span> Get boardroom-ready <strong className="font-medium text-foreground">product strategy</strong> and <strong className="font-medium text-foreground">UX validation</strong> in <span className="text-foreground font-medium">24 hours</span>.
+              </h2>
               <p className="text-muted-foreground/70 mt-2">
                 <span className="text-primary">$</span> Backed by research from <span className="text-foreground font-medium">Nielsen Norman</span> & <span className="text-foreground font-medium">Baymard Institute</span>.
               </p>
