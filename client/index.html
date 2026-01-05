@@ -3,15 +3,19 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ValidateStrategy | AI Product Validation in 24 Hours</title>
   <meta name="description"
     content="Validate your product idea in 24 hours with AI-powered UX roadmaps. Backed by Nielsen Norman & Forrester. Build what users actually want." />
   <meta name="keywords"
     content="product validation, UX strategy, AI product analysis, startup validation, product market fit, competitive analysis" />
   <meta name="author" content="ValidateStrategy" />
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <!-- Favicon - Multiple formats for cross-browser support -->
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
 
   <!-- Open Graph / Facebook -->
@@ -153,11 +157,36 @@
     }
     </script>
   <!-- Google Fonts: Inter (primary) + JetBrains Mono (code) -->
+  <!-- DNS Prefetch for external resources -->
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+  
+  <!-- Preconnect for faster font loading -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  
+  <!-- Preload critical fonts for LCP optimization -->
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
   <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
-    rel="stylesheet" />
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet" media="print" onload="this.media='all'" />
+  <noscript>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  </noscript>
+  
+  <!-- Critical CSS for above-the-fold content -->
+  <style>
+    /* Critical CSS - Inline for fastest FCP */
+    :root { --background: 0 0% 3.9%; --foreground: 0 0% 98%; }
+    body { margin: 0; font-family: 'Inter', system-ui, sans-serif; background: hsl(var(--background)); color: hsl(var(--foreground)); }
+    #root { min-height: 100vh; }
+    .min-h-screen { min-height: 100vh; }
+    .flex { display: flex; }
+    .items-center { align-items: center; }
+    .justify-center { justify-content: center; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .animate-spin { animation: spin 1s linear infinite; }
+  </style>
 </head>
 
 <body>

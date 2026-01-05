@@ -1,0 +1,48 @@
+# ValidateStrategy robots.txt
+# https://validatestrategy.com/robots.txt
+# Last updated: January 2026
+
+# Allow all search engines
+User-agent: *
+Allow: /
+Allow: /demo-analysis
+
+# Block private/authenticated areas
+Disallow: /api/
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /checkout/
+Disallow: /analysis/
+Disallow: /payment-success/
+Disallow: /verify-email
+Disallow: /history
+Disallow: /my-analyses
+
+# Block query parameters that create duplicate content
+Disallow: /*?priority=*
+Disallow: /*?ref=*
+Disallow: /*?utm_*
+
+# Googlebot specific rules (optional, for fine-tuning)
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
+
+# Bingbot specific rules
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+# Block AI training crawlers (optional - uncomment if desired)
+# User-agent: GPTBot
+# Disallow: /
+# User-agent: ChatGPT-User
+# Disallow: /
+# User-agent: CCBot
+# Disallow: /
+
+# Sitemap location
+Sitemap: https://validatestrategy.com/sitemap.xml
+
+# Host directive (helps with canonicalization)
+Host: https://validatestrategy.com

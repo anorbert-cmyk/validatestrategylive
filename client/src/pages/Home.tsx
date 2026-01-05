@@ -345,6 +345,9 @@ export default function Home() {
         </div>
       </nav>
 
+      {/* Main Content - Accessibility Landmark */}
+      <main id="main-content">
+
       {/* Hero Section - Brutalist Technical */}
       <section className="pt-28 pb-24 relative z-10">
         <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'linear-gradient(to right, rgba(128,128,128,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(128,128,128,0.03) 1px, transparent 1px)', backgroundSize: '64px 64px' }} />
@@ -1493,6 +1496,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      </main>
+      {/* End Main Content */}
 
       {/* Footer */}
       <footer className="py-12 relative z-10 border-t border-border">

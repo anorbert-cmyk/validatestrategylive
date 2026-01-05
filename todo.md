@@ -984,3 +984,45 @@
 - Phase 1: Quick wins (~6k tokens) - viewport, main landmark, font preload, lazy routes
 - Phase 2: Critical (~12k tokens) - critical CSS, image optimization, accessibility
 - Phase 3: Fine-tuning (~8k tokens) - tree shaking, best practices
+
+
+## UX Fixes - January 5, 2026
+
+### Demo Analysis Page
+- [x] Remove Output/History links from Demo Analysis page header (visitors haven't purchased yet)
+- [x] Demo page should be standalone with only "Home" and "Get Started" buttons
+
+### Dashboard Branding Fix
+- [x] Replace "Aether INTELLIGENCE" with "Validate STRATEGY" in Dashboard sidebar
+- [x] Update Dashboard tier prices ($49, $99, $199)
+
+### Admin Dashboard Overhaul
+- [x] Fix Tier Distribution chart - prices updated to $49, $99, $199
+- [x] Fix Payment Methods chart - now shows NOWPayments instead of Coinbase
+- [x] Add Log Viewer with real-time log streaming
+- [ ] Improve overall UX with Technical Brutalist style (in progress)
+
+### PageSpeed Optimization
+- [x] Fix viewport zoom (accessibility) - removed maximum-scale=1
+- [x] Add main landmark element - wrapped content in <main>
+- [x] Implement lazy loading for routes - React.lazy() for all non-critical pages
+- [x] Preload critical fonts - Inter and JetBrains Mono with preload
+- [x] Inline critical CSS - above-the-fold styles inlined in index.html
+- [x] DNS prefetch for external resources
+- [x] Font display swap for better CLS
+- [ ] Optimize images (future: implement WebP conversion)
+
+### SEO Technical Fixes
+- [x] Create robots.txt - enhanced with Googlebot/Bingbot rules, AI crawler blocks
+- [x] Create sitemap.xml - with lastmod, priority, changefreq
+- [x] Add canonical URLs (already present)
+- [x] Enhance structured data (JSON-LD) - Organization, Service, FAQPage schemas
+- [x] Optimize Core Web Vitals - lazy loading, font preload, critical CSS
+- [x] Block duplicate content URLs in robots.txt (?utm_*, ?ref=*, ?priority=*)
+
+### Favicon
+- [x] Create VS monogram favicon
+- [x] Generate all favicon sizes (16x16, 32x32, 180x180, 192x192, 512x512)
+- [x] Create favicon.ico
+- [x] Create site.webmanifest for PWA support
+- [x] Update index.html with all favicon references

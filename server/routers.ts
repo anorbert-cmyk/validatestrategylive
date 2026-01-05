@@ -1361,6 +1361,73 @@ export const appRouter = router({
       }),
 
     /**
+     * Get server logs for admin dashboard
+     */
+    getLogs: publicProcedure
+      .input(z.object({
+        signature: z.string(),
+        timestamp: z.number(),
+        address: z.string(),
+        level: z.enum(['all', 'error', 'warn', 'info']).optional().default('all'),
+        limit: z.number().optional().default(100),
+      }))
+      .query(async ({ input }) => {
+        const authResult = await verifyAdminSignature(
+          input.signature,
+          input.timestamp,
+          input.address
+        );
+
+        if (!authResult.success) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: authResult.error });
+        }
+
+        // Read logs from file
+        const fs = await import('fs/promises');
+        const path = await import('path');
+        
+        try {
+          const logsDir = path.join(process.cwd(), 'logs');
+          const combinedLogPath = path.join(logsDir, 'combined.log');
+          const errorLogPath = path.join(logsDir, 'error.log');
+          
+          let logs: Array<{ timestamp: string; level: string; message: string; metadata?: any }> = [];
+          
+          // Read combined log
+          try {
+            const combinedContent = await fs.readFile(combinedLogPath, 'utf-8');
+            const lines = combinedContent.split('\n').filter(line => line.trim());
+            
+            for (const line of lines.slice(-input.limit)) {
+              const match = line.match(/^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) \[(\w+)\]: (.*)$/);
+              if (match) {
+                const [, timestamp, level, message] = match;
+                if (input.level === 'all' || level.toLowerCase() === input.level) {
+                  logs.push({ timestamp, level: level.toLowerCase(), message });
+                }
+              }
+            }
+          } catch (e) {
+            // Log file might not exist yet
+          }
+          
+          // Sort by timestamp descending (newest first)
+          logs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+          
+          return {
+            logs: logs.slice(0, input.limit),
+            total: logs.length,
+          };
+        } catch (error) {
+          return {
+            logs: [],
+            total: 0,
+            error: 'Failed to read logs',
+          };
+        }
+      }),
+
+    /**
      * Get analysis operations summary for dashboard
      */
     getOperationsSummary: publicProcedure

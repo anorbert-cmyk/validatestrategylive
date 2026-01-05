@@ -369,10 +369,10 @@ export async function getAdminStats() {
 
   // Count by payment method
   let stripeCount = 0;
-  let coinbaseCount = 0;
+  let nowpaymentsCount = 0;
   for (const p of completedPurchases) {
     if (p.paymentMethod === "stripe") stripeCount++;
-    else if (p.paymentMethod === "coinbase") coinbaseCount++;
+    else if (p.paymentMethod === "nowpayments" || p.paymentMethod === "coinbase") nowpaymentsCount++;
   }
 
   // Get session count for funnel
@@ -389,7 +389,7 @@ export async function getAdminStats() {
     },
     paymentMethodDistribution: {
       stripe: stripeCount,
-      coinbase: coinbaseCount,
+      nowpayments: nowpaymentsCount,
     },
     conversionFunnel: {
       sessions: allSessions.length,

@@ -129,8 +129,8 @@ export default function Dashboard() {
                 <Zap className="text-white w-6 h-6" />
               </div>
               <div className="hidden lg:block">
-                <h2 className="text-foreground font-bold text-lg tracking-tight">Aether</h2>
-                <p className="text-[10px] text-indigo-400 font-mono -mt-0.5">INTELLIGENCE</p>
+                <h2 className="text-foreground font-bold text-lg tracking-tight">Validate</h2>
+                <p className="text-[10px] text-indigo-400 font-mono -mt-0.5">STRATEGY</p>
               </div>
             </a>
           </div>
@@ -266,7 +266,7 @@ export default function Dashboard() {
                         onClick={() => handleNewAnalysis("standard")}
                         disabled={createSession.isPending}
                       >
-                        <span className="text-lg font-bold">$29</span>
+                        <span className="text-lg font-bold">$49</span>
                         <span className="text-xs text-muted-foreground">Observer</span>
                       </Button>
                       <Button
@@ -275,7 +275,7 @@ export default function Dashboard() {
                         onClick={() => handleNewAnalysis("medium")}
                         disabled={createSession.isPending}
                       >
-                        <span className="text-lg font-bold">$79</span>
+                        <span className="text-lg font-bold">$99</span>
                         <span className="text-xs text-muted-foreground">Insider</span>
                       </Button>
                       <Button

@@ -983,25 +983,14 @@ export default function DemoAnalysis() {
           </div>
           
           <div className="flex items-center gap-2">
-            {isUnlocked && (
-              <>
-                <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")}>
-                  <FileText className="h-4 w-4 mr-2" />
-                  Output
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => navigate("/history")}>
-                  <BarChart3 className="h-4 w-4 mr-2" />
-                  History
-                </Button>
-              </>
-            )}
+            {/* Demo page: Only show "Get Started" CTA, no Output/History links */}
             <Button 
               className="bg-primary hover:bg-primary/90"
               size="sm"
               onClick={() => setShowNewAnalysisModal(true)}
             >
               <Plus className="h-4 w-4 mr-2" />
-              New Analysis
+              Get Started
             </Button>
           </div>
         </div>

@@ -169,6 +169,13 @@ export default function Admin() {
     { enabled: isAuthenticated && !!adminAuth }
   );
 
+  // ============ LOG VIEWER ============
+  const [logLevel, setLogLevel] = useState<'all' | 'error' | 'warn' | 'info'>('all');
+  const { data: logsData, isLoading: logsLoading, refetch: refetchLogs } = trpc.admin.getLogs.useQuery(
+    adminAuth ? { ...adminAuth, level: logLevel, limit: 100 } : { signature: "", timestamp: 0, address: "", level: 'all', limit: 100 },
+    { enabled: isAuthenticated && !!adminAuth, refetchInterval: 5000 } // Auto-refresh every 5s
+  );
+
   // Toggle retry processor mutation
   const toggleProcessor = trpc.admin.toggleRetryProcessor.useMutation({
     onSuccess: (data) => {
@@ -675,9 +682,9 @@ export default function Admin() {
               ) : (
                 <div className="space-y-4">
                   {[
-                    { tier: "Observer", count: stats?.tierDistribution?.standard || 0, color: "bg-slate-500", price: "$9" },
-                    { tier: "Insider", count: stats?.tierDistribution?.medium || 0, color: "bg-indigo-500", price: "$29" },
-                    { tier: "Syndicate", count: stats?.tierDistribution?.full || 0, color: "bg-purple-500", price: "$79" },
+                    { tier: "Observer", count: stats?.tierDistribution?.standard || 0, color: "bg-emerald-500", price: "$49" },
+                    { tier: "Insider", count: stats?.tierDistribution?.medium || 0, color: "bg-indigo-500", price: "$99" },
+                    { tier: "Syndicate", count: stats?.tierDistribution?.full || 0, color: "bg-purple-500", price: "$199" },
                   ].map((item) => {
                     const total = (stats?.tierDistribution?.standard || 0) + 
                                   (stats?.tierDistribution?.medium || 0) + 
@@ -725,10 +732,10 @@ export default function Admin() {
                 <div className="space-y-4">
                   {[
                     { method: "Stripe (Card)", count: stats?.paymentMethodDistribution?.stripe || 0, icon: CreditCard, color: "bg-blue-500" },
-                    { method: "Coinbase (Crypto)", count: stats?.paymentMethodDistribution?.coinbase || 0, icon: Bitcoin, color: "bg-orange-500" },
+                    { method: "NOWPayments (Crypto)", count: (stats?.paymentMethodDistribution as any)?.nowpayments || 0, icon: Bitcoin, color: "bg-orange-500" },
                   ].map((item) => {
                     const total = (stats?.paymentMethodDistribution?.stripe || 0) + 
-                                  (stats?.paymentMethodDistribution?.coinbase || 0);
+                                  ((stats?.paymentMethodDistribution as any)?.nowpayments || 0);
                     const percent = total > 0 ? (item.count / total) * 100 : 0;
                     
                     return (
@@ -2112,6 +2119,74 @@ export default function Admin() {
                 <Wallet className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p className="text-lg font-medium">No transactions yet</p>
                 <p className="text-sm">Transactions will appear here once customers make purchases</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* ============ LOG VIEWER ============ */}
+        <Card className="glass-panel">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <h2 className="flex items-center gap-2 text-lg font-semibold leading-none tracking-tight">
+                <Activity className="h-5 w-5" />
+                System Logs
+              </h2>
+              <div className="flex items-center gap-2">
+                <select
+                  value={logLevel}
+                  onChange={(e) => setLogLevel(e.target.value as 'all' | 'error' | 'warn' | 'info')}
+                  className="px-3 py-1.5 text-sm rounded-md bg-background border border-border"
+                >
+                  <option value="all">All Levels</option>
+                  <option value="error">Errors Only</option>
+                  <option value="warn">Warnings</option>
+                  <option value="info">Info</option>
+                </select>
+                <Button variant="outline" size="sm" onClick={() => refetchLogs()}>
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {logsLoading ? (
+              <div className="space-y-2">
+                {[...Array(5)].map((_, i) => (
+                  <Skeleton key={i} className="h-6 w-full" />
+                ))}
+              </div>
+            ) : logsData?.logs && logsData.logs.length > 0 ? (
+              <div className="max-h-[400px] overflow-y-auto space-y-1 font-mono text-xs">
+                {logsData.logs.map((log, i) => (
+                  <div
+                    key={i}
+                    className={`p-2 rounded-md flex items-start gap-2 ${
+                      log.level === 'error' ? 'bg-red-500/10 text-red-400' :
+                      log.level === 'warn' ? 'bg-yellow-500/10 text-yellow-400' :
+                      'bg-muted/50 text-muted-foreground'
+                    }`}
+                  >
+                    <span className="text-muted-foreground whitespace-nowrap">{log.timestamp}</span>
+                    <Badge
+                      variant="outline"
+                      className={`text-[10px] px-1.5 py-0 ${
+                        log.level === 'error' ? 'border-red-500/50 text-red-400' :
+                        log.level === 'warn' ? 'border-yellow-500/50 text-yellow-400' :
+                        'border-blue-500/50 text-blue-400'
+                      }`}
+                    >
+                      {log.level.toUpperCase()}
+                    </Badge>
+                    <span className="flex-1 break-all">{log.message}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No logs available</p>
+                <p className="text-xs">Logs will appear here as the system operates</p>
               </div>
             )}
           </CardContent>
