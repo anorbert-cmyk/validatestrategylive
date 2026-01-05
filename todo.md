@@ -1158,3 +1158,11 @@
 
 ## Publish Attempt - January 5, 2026 17:55
 - [x] All systems verified - ready for publish
+
+
+## Blank Page Fix - January 5, 2026
+- [x] Diagnosed forwardRef error on custom domain (validatestrategy.com)
+- [x] Root cause: admin-charts chunk side-effect import before React initialization
+- [x] Fixed: Removed manual admin-charts chunk from vite.config.ts
+- [x] Recharts now bundled directly with Admin page (lazy loaded)
+- [x] All 324 tests passing
