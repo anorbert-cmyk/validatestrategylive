@@ -237,7 +237,14 @@
 </head>
 
 <body>
-  <div id="root"></div>
+  <div id="root">
+    <!-- SEO fallback content for crawlers (hidden when React loads) -->
+    <div id="seo-fallback" style="position:absolute;left:-9999px;">
+      <h1>ValidateStrategy - AI Product Validation in 24 Hours</h1>
+      <h2>Stop Guessing. Validate Your Product Strategy with AI-Powered Analysis.</h2>
+      <p>Get boardroom-ready product strategy and UX validation backed by research from Nielsen Norman and Baymard Institute. Reduce risk, validate faster.</p>
+    </div>
+  </div>
   <script type="module" src="/src/main.tsx"></script>
   <script defer src="%VITE_ANALYTICS_ENDPOINT%/umami" data-website-id="%VITE_ANALYTICS_WEBSITE_ID%"></script>
 </body>
