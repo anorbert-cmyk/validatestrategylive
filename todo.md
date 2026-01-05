@@ -950,3 +950,6 @@
 - [x] Create Google Search Console setup guide (GSC_SETUP_GUIDE.md)
 - [x] Keep meta keywords (6 focused ones, not harmful)
 - [x] Preserve "Technical Brutalist" brand voice in H1
+
+## Hero Copy Optimization - January 5, 2026
+- [x] Add conversion-optimized tagline "Stop building blind." to hero subtitle
