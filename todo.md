@@ -1080,3 +1080,40 @@
 
 ### Source Maps
 - [x] Enable source maps in production build for debugging (vite.config.ts sourcemap: true)
+
+
+## Admin Dashboard Improvements - January 5, 2026
+
+### Design Update
+- [x] Verify Technical Brutalist design is applied consistently
+- [x] Added fractal blobs and noise texture to Admin Dashboard
+- [x] Ensure design matches homepage aesthetic
+
+### Info Tooltips
+- [x] Add info icon to Revenue Metrics section
+- [x] Add info icon to Tier Distribution section
+- [x] Add info icon to Payment Methods section
+- [x] Add info icon to Transaction History section
+- [x] Add info icon to Email Subscribers section
+- [x] Add info icon to System Logs section
+- [x] Each tooltip explains what the data means and why it's important
+
+### Data Validation
+- [ ] Verify all stats are pulling from real database
+- [ ] Check transaction history synchronization
+- [ ] Verify email subscriber data is accurate
+- [ ] Ensure log viewer shows real Winston logs
+
+
+## Performance Optimization - January 5, 2026
+
+### JavaScript Bundle Optimization
+- [x] Move Recharts to admin-only chunk (admin-charts)
+- [x] Recharts, d3, decimal.js only load on Admin page
+- [x] Reduced main bundle size for homepage
+
+### Accessibility Fixes
+- [x] Add aria-label to Demo Analysis button
+- [x] Add aria-label to Connect Wallet button
+- [x] Add aria-label to Disconnect Wallet button
+- [x] Theme toggle buttons already had aria-labels

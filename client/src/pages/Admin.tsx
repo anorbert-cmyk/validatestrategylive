@@ -45,8 +45,16 @@ import {
   Pause,
   Database,
   Timer,
-  ListRestart
+  ListRestart,
+  Info,
+  HelpCircle
 } from "lucide-react";
+import {
+  Tooltip as UITooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   LineChart,
   Line,
@@ -502,6 +510,16 @@ export default function Admin() {
   // Authenticated - show admin dashboard
   return (
     <div className="admin-container">
+      {/* Noise Texture Overlay */}
+      <div className="bg-noise" />
+      
+      {/* Fractal Blob Background - Technical Brutalist */}
+      <div className="fractal-container">
+        <div className="fractal-blob blob-1" />
+        <div className="fractal-blob blob-2" />
+        <div className="fractal-blob blob-3" />
+      </div>
+
       {/* Header - Technical Brutalist */}
       <header className="admin-header">
         <div className="container flex items-center justify-between h-14">
@@ -532,6 +550,18 @@ export default function Admin() {
         <div className="admin-section-title">
           <Zap className="w-3 h-3" />
           Revenue Metrics
+          <TooltipProvider>
+            <UITooltip>
+              <TooltipTrigger asChild>
+                <button className="ml-2 text-muted-foreground hover:text-foreground transition-colors">
+                  <HelpCircle className="w-3.5 h-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="max-w-xs">
+                <p className="text-xs"><strong>Revenue Metrics</strong> shows your total earnings across all payment methods. Track USD revenue from Stripe/PayPal and crypto revenue from NOWPayments. Use this to monitor business growth and identify your most profitable channels.</p>
+              </TooltipContent>
+            </UITooltip>
+          </TooltipProvider>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="admin-stat-card">
@@ -676,6 +706,18 @@ export default function Admin() {
               <h2 className="flex items-center gap-2 text-lg font-semibold leading-none tracking-tight">
                 <PieChart className="h-5 w-5" />
                 Tier Distribution
+                <TooltipProvider>
+                  <UITooltip>
+                    <TooltipTrigger asChild>
+                      <button className="ml-auto text-muted-foreground hover:text-foreground transition-colors">
+                        <HelpCircle className="w-4 h-4" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="left" className="max-w-xs">
+                      <p className="text-xs"><strong>Tier Distribution</strong> shows how many customers purchased each pricing tier. Observer ($49) is entry-level, Insider ($99) is mid-tier, and Syndicate ($199) is premium. Use this to understand which tier resonates most with your audience and optimize pricing strategy.</p>
+                    </TooltipContent>
+                  </UITooltip>
+                </TooltipProvider>
               </h2>
             </CardHeader>
             <CardContent>
@@ -726,6 +768,18 @@ export default function Admin() {
               <h2 className="flex items-center gap-2 text-lg font-semibold leading-none tracking-tight">
                 <BarChart3 className="h-5 w-5" />
                 Payment Methods
+                <TooltipProvider>
+                  <UITooltip>
+                    <TooltipTrigger asChild>
+                      <button className="ml-auto text-muted-foreground hover:text-foreground transition-colors">
+                        <HelpCircle className="w-4 h-4" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="left" className="max-w-xs">
+                      <p className="text-xs"><strong>Payment Methods</strong> shows the distribution of payments between Stripe (credit cards) and NOWPayments (cryptocurrency). This helps you understand customer payment preferences and whether to prioritize certain payment integrations.</p>
+                    </TooltipContent>
+                  </UITooltip>
+                </TooltipProvider>
               </h2>
             </CardHeader>
             <CardContent>
@@ -1840,6 +1894,18 @@ export default function Admin() {
                 <Mail className="h-5 w-5" />
                 Email Subscribers
                 <Badge variant="secondary" className="ml-2">{emailStats.total}</Badge>
+                <TooltipProvider>
+                  <UITooltip>
+                    <TooltipTrigger asChild>
+                      <button className="ml-2 text-muted-foreground hover:text-foreground transition-colors">
+                        <HelpCircle className="w-4 h-4" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="max-w-xs">
+                      <p className="text-xs"><strong>Email Subscribers</strong> lists users who signed up via the email gate before viewing the demo. Green = verified email, Yellow = pending verification. Export to CSV for email marketing campaigns. High verification rate indicates quality leads.</p>
+                    </TooltipContent>
+                  </UITooltip>
+                </TooltipProvider>
               </h2>
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-4 text-sm">
@@ -1957,6 +2023,18 @@ export default function Admin() {
                 <Calendar className="h-5 w-5" />
                 Transaction History
                 <Badge variant="secondary" className="ml-2">{filteredTransactions.length}</Badge>
+                <TooltipProvider>
+                  <UITooltip>
+                    <TooltipTrigger asChild>
+                      <button className="ml-2 text-muted-foreground hover:text-foreground transition-colors">
+                        <HelpCircle className="w-4 h-4" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="max-w-xs">
+                      <p className="text-xs"><strong>Transaction History</strong> shows all purchases with status tracking. Green = completed, Yellow = pending, Red = failed. Click any transaction to copy its ID. Use search to find specific customers or filter by status. Data syncs in real-time from Stripe and NOWPayments.</p>
+                    </TooltipContent>
+                  </UITooltip>
+                </TooltipProvider>
               </h2>
               <div className="flex items-center gap-2">
                 <div className="relative">
@@ -2137,6 +2215,18 @@ export default function Admin() {
               <h2 className="flex items-center gap-2 text-lg font-semibold leading-none tracking-tight">
                 <Activity className="h-5 w-5" />
                 System Logs
+                <TooltipProvider>
+                  <UITooltip>
+                    <TooltipTrigger asChild>
+                      <button className="ml-2 text-muted-foreground hover:text-foreground transition-colors">
+                        <HelpCircle className="w-4 h-4" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="max-w-xs">
+                      <p className="text-xs"><strong>System Logs</strong> shows real-time Winston server logs. Red = errors requiring attention, Yellow = warnings, Blue = info. Use this to debug issues, monitor API calls, and track system health. Logs auto-refresh every 5 seconds. Filter by level to focus on specific issues.</p>
+                    </TooltipContent>
+                  </UITooltip>
+                </TooltipProvider>
               </h2>
               <div className="flex items-center gap-2">
                 <select

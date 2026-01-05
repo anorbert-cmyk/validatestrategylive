@@ -275,6 +275,7 @@ export default function Home() {
               size="sm"
               onClick={() => navigate("/demo-analysis")}
               className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 sm:gap-1.5 text-cyan-400 hover:text-cyan-300 px-2 sm:px-3"
+              aria-label="View demo analysis"
             >
               <Eye className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
               <span className="hidden xs:inline">Demo</span>
@@ -316,6 +317,7 @@ export default function Home() {
                 size="sm"
                 onClick={disconnectWallet}
                 className="text-[9px] sm:text-[10px] font-bold py-1 sm:py-1.5 px-2 sm:px-3 flex items-center gap-1 sm:gap-2 font-mono"
+                aria-label="Disconnect wallet"
               >
                 <Wallet className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-green-500" />
                 <span className="hidden xs:inline">{shortenAddress(walletAddress)}</span>
@@ -327,6 +329,7 @@ export default function Home() {
                 onClick={connectWallet}
                 disabled={isConnectingWallet}
                 className="text-[9px] sm:text-[10px] font-bold py-1 sm:py-1.5 px-2 sm:px-3 flex items-center gap-1 sm:gap-2"
+                aria-label="Connect MetaMask wallet"
               >
                 {isConnectingWallet ? (
                   <>

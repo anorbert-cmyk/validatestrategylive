@@ -27,19 +27,27 @@ export default defineConfig({
     sourcemap: true, // Enable source maps for debugging
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Vendor splitting for better caching and parallel loading
-          'vendor-react': ['react', 'react-dom', 'wouter'],
-          'vendor-charts': ['recharts'],
-          'vendor-ui': [
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-tabs',
-            '@radix-ui/react-select',
-            '@radix-ui/react-dropdown-menu',
-            '@radix-ui/react-tooltip',
-            '@radix-ui/react-slot',
-          ],
-          'vendor-utils': ['clsx', 'tailwind-merge', 'class-variance-authority'],
+        manualChunks(id) {
+          // Keep recharts with Admin page only (lazy loaded)
+          if (id.includes('recharts') || id.includes('d3-') || id.includes('decimal.js')) {
+            return 'admin-charts';
+          }
+          // Core React - needed everywhere
+          if (id.includes('react-dom') || id.includes('react/')) {
+            return 'vendor-react';
+          }
+          // Router - small, needed for navigation
+          if (id.includes('wouter')) {
+            return 'vendor-react';
+          }
+          // UI components - lazy load with pages that use them
+          if (id.includes('@radix-ui')) {
+            return 'vendor-ui';
+          }
+          // Utility functions - small, can be in main bundle
+          if (id.includes('clsx') || id.includes('tailwind-merge') || id.includes('class-variance-authority')) {
+            return 'vendor-utils';
+          }
         },
       },
     },
