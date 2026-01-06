@@ -1,5 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Textarea } from "@/components/ui/textarea";
 import { useTheme } from "@/contexts/ThemeContext";
 import { trpc } from "@/lib/trpc";
@@ -11,6 +12,7 @@ import {
   Crown,
   Eye,
   HelpCircle,
+  Info,
   LayoutDashboard,
   Lock,
   Mail,
@@ -869,29 +871,71 @@ export default function Home() {
                       <CheckCircle className="w-3.5 h-3.5 text-purple-400" />
                       <span className="font-semibold text-foreground">Everything in Insider, plus:</span>
                     </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="w-3.5 h-3.5 text-purple-400" />
-                      Detailed Product Requirements (PRD)
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-3.5 h-3.5 text-purple-400 mt-0.5 flex-shrink-0" />
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help border-b border-dotted border-muted-foreground/50 inline-flex flex-wrap items-center gap-1">"War Room" Competitor Sim<Info className="w-3 h-3 text-muted-foreground/70 sm:hidden flex-shrink-0" /><span className="text-muted-foreground text-xs hidden sm:inline">(Live counter-moves)</span></span>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p>We simulate what your competitors will do in the next 3 months. Not static analysis - predictive intelligence that keeps you ahead.</p>
+                        </TooltipContent>
+                      </Tooltip>
                     </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="w-3.5 h-3.5 text-purple-400" />
-                      Technical Architecture Diagram
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-3.5 h-3.5 text-purple-400 mt-0.5 flex-shrink-0" />
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help border-b border-dotted border-muted-foreground/50 inline-flex flex-wrap items-center gap-1">"Fake Door" Strategy<Info className="w-3 h-3 text-muted-foreground/70 sm:hidden flex-shrink-0" /><span className="text-muted-foreground text-xs hidden sm:inline">(Validate demand first)</span></span>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p>Validate demand BEFORE you code. Pre-order landing page + waitlist = proof that people will pay. The only real validation is a wallet opening.</p>
+                        </TooltipContent>
+                      </Tooltip>
                     </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="w-3.5 h-3.5 text-purple-400" />
-                      User Flow & Database Schema
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-3.5 h-3.5 text-purple-400 mt-0.5 flex-shrink-0" />
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help border-b border-dotted border-muted-foreground/50 inline-flex items-center gap-1">Investor Pitch Deck Outline<Info className="w-3 h-3 text-muted-foreground/70 sm:hidden flex-shrink-0" /></span>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p>Structured outline ready for your pitch deck. Problem, solution, market size, traction, team, and ask - all backed by your validated strategy.</p>
+                        </TooltipContent>
+                      </Tooltip>
                     </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="w-3.5 h-3.5 text-purple-400" />
-                      Investor Pitch Deck Outline
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-3.5 h-3.5 text-purple-400 mt-0.5 flex-shrink-0" />
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help border-b border-dotted border-muted-foreground/50 inline-flex items-center gap-1">Go-to-Market Launch Plan<Info className="w-3 h-3 text-muted-foreground/70 sm:hidden flex-shrink-0" /></span>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p>Week-by-week launch roadmap with milestones, channels, and success metrics. From Phase 0 validation to full market entry.</p>
+                        </TooltipContent>
+                      </Tooltip>
                     </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="w-3.5 h-3.5 text-purple-400" />
-                      Go-to-Market Strategy (GTM)
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-3.5 h-3.5 text-purple-400 mt-0.5 flex-shrink-0" />
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help border-b border-dotted border-muted-foreground/50 inline-flex flex-wrap items-center gap-1">Profitability Model<Info className="w-3 h-3 text-muted-foreground/70 sm:hidden flex-shrink-0" /><span className="text-muted-foreground text-xs hidden sm:inline">(Unit Economics)</span></span>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p>Industry-specific unit economics: Cost to Serve vs. Revenue per Customer. AI tokens, COGS, gas fees - we calculate what matters for YOUR business model.</p>
+                        </TooltipContent>
+                      </Tooltip>
                     </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="w-3.5 h-3.5 text-purple-400" />
-                      Advanced AI Prompt Library
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-3.5 h-3.5 text-purple-400 mt-0.5 flex-shrink-0" />
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help border-b border-dotted border-muted-foreground/50 inline-flex items-center gap-1">Full Tech Stack Architecture<Info className="w-3 h-3 text-muted-foreground/70 sm:hidden flex-shrink-0" /></span>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p>Complete technical blueprint: frontend, backend, database, APIs, and infrastructure. Investment-grade documentation ready for your dev team.</p>
+                        </TooltipContent>
+                      </Tooltip>
                     </li>
                   </ul>
 

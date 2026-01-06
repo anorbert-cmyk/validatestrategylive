@@ -1207,3 +1207,43 @@
 - [ ] Error handling
 - [ ] Responsive design check
 - [ ] Accessibility improvements
+
+- [ ] Remove vite-plugin-manus-runtime from package.json and vite.config.ts (causes forwardRef error) - REVERTED
+- [ ] Fix React chunk splitting logic in vite.config.ts for React 19 compatibility - REVERTED
+
+## CSP/ForwardRef Fix - January 5, 2025
+- [ ] Remove streamdown, recharts, vite-plugin-manus-runtime from package.json
+- [ ] Add react-markdown, rehype-highlight, remark-gfm to package.json
+- [ ] Update vite.config.ts (remove manus runtime plugin, fix chunk splitting)
+- [ ] Create new Markdown.tsx component (CSP-compliant markdown renderer)
+- [ ] Replace Streamdown with Markdown in DemoAnalysis.tsx
+- [ ] Replace Streamdown with Markdown in AnalysisResult.tsx
+- [ ] Replace Streamdown with Markdown in AIChatBox.tsx
+- [ ] Update Admin.tsx to use CSS-based charts instead of recharts
+- [ ] Delete chart.tsx (recharts wrapper)
+- [ ] Create TermsOfService.tsx page
+- [ ] Create PrivacyPolicy.tsx page
+- [ ] Add /terms and /privacy routes to App.tsx
+- [ ] Update Home.tsx navbar and footer logos
+- [ ] Update Home.tsx H1 heading for mobile
+- [ ] Add SEO fallback to index.html
+- [ ] Create resizable-table.tsx component
+
+- [x] Remove/update credit card payment mentions in Terms of Service (not yet implemented)
+- [x] Remove/update credit card payment mentions in Privacy Policy (not yet implemented)
+
+- [x] Update Syndicate tier features in Home.tsx with new value propositions
+- [x] Update master prompt file with new Syndicate tier content
+
+- [x] Add hover tooltip explanations for new Syndicate tier features on Pricing page
+
+- [x] Add 300ms fade-in/fade-out animation to Syndicate tier tooltips
+- [x] Add info icon next to features on mobile for tooltip discoverability
+
+- [ ] Fix Syndicate tier mobile layout - make feature list more compact and aesthetic
+
+- [x] Update tierPromptService.ts with new Syndicate Master Prompt elements (War Room, Fake Door, Unit Economics, Pre-Mortem, Figma Prompts)
+
+- [x] Check and revert shared/apexPrompt.ts if it has new Syndicate elements (Observer/Insider should NOT have War Room, Fake Door, etc.)
+- [x] Update paymentConfirmationEmail.ts Syndicate features list
+- [x] Increase Syndicate tier token limits by 500 for each part (6,500/6,500/6,500/7,500/7,500/5,500)
