@@ -8,6 +8,8 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import webhookRouter from "../webhooks";
+import hpp from "hpp";
+import cors from "cors";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -32,16 +34,24 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
 
+  // SECURITY: Security headers (Helmet) - Must be first
+  const { apiRateLimit, securityHeaders, requestLogger } = await import("../middleware/security");
+  app.use(securityHeaders);
+
+  // SECURITY: CORS configuration
+  app.use(cors());
+
   // SECURITY: Reduced default payload limit to 1MB (was 50MB - DoS risk)
   // Specific routes that need larger payloads should override this
   app.use(express.json({ limit: "1mb" }));
   app.use(express.urlencoded({ limit: "1mb", extended: true }));
 
+  // SECURITY: HTTP Parameter Pollution protection
+  app.use(hpp());
+
   // SECURITY: Global rate limiting (100 requests per 15 minutes per IP)
   // Specific routes have stricter limits defined in middleware/security.ts
-  const { apiRateLimit, securityHeaders, requestLogger } = await import("../middleware/security");
   app.use(apiRateLimit);
-  app.use(securityHeaders);
 
   // Request logging for security monitoring
   if (process.env.NODE_ENV === "production") {
