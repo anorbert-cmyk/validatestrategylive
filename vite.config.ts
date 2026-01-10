@@ -4,9 +4,8 @@ import react from "@vitejs/plugin-react";
 import fs from "node:fs";
 import path from "path";
 import { defineConfig } from "vite";
-import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
 
-const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime()];
+const plugins = [react(), tailwindcss(), jsxLocPlugin()];
 
 export default defineConfig({
   plugins,
@@ -27,14 +26,6 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          // IMPORTANT: Exclude recharts and its dependencies from vendor-react
-          // These use Function("return this") which violates CSP
-          // They should only be loaded on Admin page (lazy loaded)
-          if (id.includes('recharts') || id.includes('d3-') || id.includes('decimal.js') || id.includes('lodash')) {
-            // Don't assign to any chunk - let Vite bundle with the importing page
-            return undefined;
-          }
-          
           // Core React - needed everywhere (must be first to ensure proper initialization)
           if (id.includes('react-dom') || id.includes('react/') || id.includes('node_modules/react/')) {
             return 'vendor-react';
