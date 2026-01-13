@@ -1,15 +1,24 @@
 # Project State
 
 ## Current Phase
-Phase 1: Critical Fixes & Compliance
+
+Phase 2: Render & PlanetScale Integration
 
 ## Context
-We are stabilizing the codebase for production. A persistent `forwardRef` error needs addressing, likely caused by `vite-plugin-manus-runtime` or `recharts`. We also need to add legal pages to be compliant.
+
+Phase 1 (Critical Fixes & Compliance) is complete. We are now migrating the infrastructure from local/Railway to Render + PlanetScale for production deployment.
 
 ## Decisions
-- Moving away from `streamdown` to `react-markdown` for CSP compliance.
-- Removing `recharts` if it causes issues or replacing it with CSS-only charts for Admin dashboard to simplify dependencies.
-- Using American English for legal documents.
+
+- Using PlanetScale for MySQL database (serverless, scalable)
+- Using Render for hosting (simple deployment, good DX)
+- Keeping existing Drizzle ORM, updating for MySQL dialect
+- Environment variables will be configured in Render dashboard
 
 ## Blockers
-- None currently.
+
+- None currently
+
+## Completed
+
+- Phase 1: Security middleware, legal pages, dependency cleanup
