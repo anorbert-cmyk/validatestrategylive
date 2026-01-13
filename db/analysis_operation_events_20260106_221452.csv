@@ -1,0 +1,13 @@
+id,operationId,sessionId,eventType,partNumber,previousState,newState,errorCode,errorMessage,durationMs,tokenCount,actorType,actorId,metadata,createdAt
+1,fad00100-5bbc-4236-b667-748c8b50254c,session-123,operation_started,,,initialized,,,,,system,,"{""tier"": ""full"", ""totalParts"": 6}",2026-01-04 17:38:44
+30001,65555e5b-de5e-435d-bfd2-8ffec3117e60,admin-regen-test,operation_cancelled,,initialized,cancelled,,,,,admin,0xa14504ffe5e9a245c9d4079547fa16fa0a823114,{},2026-01-05 13:57:15
+30002,6cf48b21-8dbb-4ab7-b866-1e89a34c0fff,circuit-breaker-test,operation_cancelled,,initialized,cancelled,,,,,admin,0xa14504ffe5e9a245c9d4079547fa16fa0a823114,{},2026-01-05 13:57:20
+30003,53e6b788-e06a-4ed0-ae44-0ff4f429e431,admin-regen-test,operation_cancelled,,initialized,cancelled,,,,,admin,0xa14504ffe5e9a245c9d4079547fa16fa0a823114,{},2026-01-05 13:57:21
+30004,e732f311-9da4-4115-849d-5cb3bb07c0a2,circuit-breaker-test,operation_cancelled,,initialized,cancelled,,,,,admin,0xa14504ffe5e9a245c9d4079547fa16fa0a823114,{},2026-01-05 13:57:23
+30005,1a655724-f2a5-48ca-a5ad-a101717d2510,syndicate-flow-test,operation_cancelled,,initialized,cancelled,,,,,admin,0xa14504ffe5e9a245c9d4079547fa16fa0a823114,{},2026-01-05 13:57:24
+30006,4e63c72b-4de5-41f2-ac70-1d86902c3cde,syndicate-partial-test,operation_cancelled,,initialized,cancelled,,,,,admin,0xa14504ffe5e9a245c9d4079547fa16fa0a823114,{},2026-01-05 13:57:26
+30007,cd89b39d-902f-48ce-b08b-2e9cff1ccbd5,memory-test-197,operation_cancelled,,initialized,cancelled,,,,,admin,0xa14504ffe5e9a245c9d4079547fa16fa0a823114,{},2026-01-05 13:57:28
+30008,dcd8d1a8-1df7-4683-a8e3-bd9a2312657a,memory-test-196,operation_cancelled,,initialized,cancelled,,,,,admin,0xa14504ffe5e9a245c9d4079547fa16fa0a823114,{},2026-01-05 13:57:32
+30009,50cc6e55-a279-4200-bbf3-15ccd75753cd,insider-flow-test,operation_cancelled,,initialized,cancelled,,,,,admin,0xa14504ffe5e9a245c9d4079547fa16fa0a823114,{},2026-01-05 13:57:33
+30010,a745534a-90bc-43da-bb29-3621ab159e7e,memory-test-195,operation_cancelled,,initialized,cancelled,,,,,admin,0xa14504ffe5e9a245c9d4079547fa16fa0a823114,{},2026-01-05 13:57:34
+30011,57b31126-33a6-4770-8ed9-9c2747389074,memory-test-192,operation_cancelled,,initialized,cancelled,,,,,admin,0xa14504ffe5e9a245c9d4079547fa16fa0a823114,{},2026-01-05 13:57:35

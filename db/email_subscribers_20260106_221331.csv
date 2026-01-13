@@ -1,0 +1,10 @@
+id,email,source,subscribedAt,isActive,unsubscribedAt,verificationToken,verificationSentAt,isVerified,verifiedAt
+1,marketing-test@aetherlogic.io,demo_gate,2025-12-29 12:10:22,1,,,,0,
+30001,test@example.com,demo_analysis_gate,2026-01-02 20:32:23,1,,,,0,
+30002,demo@test.com,demo_analysis_gate,2026-01-02 20:48:18,1,,,,0,
+60001,barnanorbert66@gmail.com,demo_analysis_gate,2026-01-02 21:26:56,1,,,,0,
+90001,valami@valami.com,demo_analysis_gate,2026-01-03 09:26:06,1,,,,0,
+90002,test-email-gate@validatestrategy.com,demo_analysis_gate,2026-01-03 10:43:06,1,,,,0,
+120001,test-recaptcha-fix@gmail.com,demo_analysis_gate,2026-01-03 11:53:06,1,,QignVWx939cNzJ982NUeOkuaTaP9WnA800CfCuqwfSJbNmX3cSsH7nvp8Y4tPrf9,2026-01-03 11:53:07,0,
+150001,anorbert@pm.me,demo_analysis_gate,2026-01-03 15:13:01,1,,fzhZ4gFyXNotay8MP5RyYViDNjXA6mqqk7bTgOTSP1T38VpgJocu1AZk0eMfwOq2,2026-01-03 15:13:01,0,
+180001,anorbert@proton.me,demo_analysis_gate,2026-01-06 11:02:57,1,,flJNkwm17hfO4bluwgl6dMNZID0VG8PHJJyGGQnJQujV3r7lxvNu8wxpPz5TsUHh,2026-01-06 11:02:58,0,

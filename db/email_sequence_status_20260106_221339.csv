@@ -1,0 +1,7 @@
+id,subscriberId,email,email1SentAt,email1OpenedAt,email1ClickedAt,email2SentAt,email2OpenedAt,email2ClickedAt,email3SentAt,email3OpenedAt,email3ClickedAt,email4SentAt,email4OpenedAt,email4ClickedAt,convertedAt,conversionSessionId,unsubscribedAt,createdAt
+1,60001,barnanorbert66@gmail.com,2026-01-02 21:26:56,,,,,,,,,,,,,,,2026-01-02 21:26:56
+30001,90001,valami@valami.com,2026-01-03 09:26:06,,,,,,,,,,,,,,,2026-01-03 09:26:06
+30002,90002,test-email-gate@validatestrategy.com,2026-01-03 10:43:09,,,,,,,,,,,,,,,2026-01-03 10:43:09
+60001,1,marketing-test@aetherlogic.io,2026-01-03 18:17:35,,,2026-01-03 20:49:43,,,,,,,,,,,,2026-01-03 18:17:36
+60002,30001,test@example.com,2026-01-03 18:17:35,,,,,,,,,,,,,,,2026-01-03 18:17:36
+90001,30002,demo@test.com,2026-01-03 20:49:43,,,,,,,,,,,,,,,2026-01-03 20:49:44

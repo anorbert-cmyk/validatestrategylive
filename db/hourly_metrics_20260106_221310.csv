@@ -1,0 +1,1 @@
+id,hourStart,totalRequests,successfulRequests,failedRequests,partialSuccesses,retriedRequests,avgDurationMs,p50DurationMs,p95DurationMs,p99DurationMs,tierStandard,tierMedium,tierFull,createdAt

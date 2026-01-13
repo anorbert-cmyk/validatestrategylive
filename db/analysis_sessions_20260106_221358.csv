@@ -1,0 +1,13 @@
+id,sessionId,userId,problemStatement,tier,status,createdAt,updatedAt,email,isPriority,prioritySource
+1,test-apex-demo-xfVKD0i5,,How can we improve the onboarding experience for our B2B SaaS product to reduce time-to-value and increase user activation rates?,full,completed,2025-12-28 10:29:52,2025-12-28 10:29:52,,0,
+2,test-apex-demo-AqrC9jlU,,How can we improve the onboarding experience for our B2B SaaS product to reduce time-to-value and increase user activation rates?,full,completed,2025-12-28 10:30:17,2025-12-28 10:30:17,,0,
+3,test-apex-demo-y3nPpMLg,,How can we improve the onboarding experience for our B2B SaaS product to reduce time-to-value and increase user activation rates?,full,completed,2025-12-28 10:31:00,2025-12-28 10:31:00,,0,
+4,test-apex-demo-LAIdJqey,,How can we improve the onboarding experience for our B2B SaaS product to reduce time-to-value and increase user activation rates?,full,completed,2025-12-28 10:31:17,2025-12-28 10:31:17,,0,
+30001,VgSqsVZDqUKUb68g,1,I need to build a SaaS platform for project management but I'm not sure if the market is saturated. How can I differentiate and validate demand?,standard,pending_payment,2025-12-30 23:36:18,2025-12-30 23:36:18,barnanorbert66@gmail.com,0,
+30002,83EYgH_1aMtDQF0u,1,I want to build a mobile app for tracking personal finances and investments. How can I differentiate from existing apps like Mint or Personal Capital?,standard,pending_payment,2025-12-30 23:47:45,2025-12-30 23:47:45,barnanorbert66@gmail.com,0,
+60001,80RD8pX5Du9IjYnR,1,I want to build a mobile app for tracking personal fitness goals with AI coaching,standard,pending_payment,2026-01-01 01:31:33,2026-01-01 01:31:33,barnanorbert66@gmail.com,0,
+90001,C92Bit_EI_wNrPel,1,jjjjjjjjjjjjjjjjjiiiopopop,full,pending_payment,2026-01-02 21:58:35,2026-01-02 21:58:35,barnanorbert66@gmail.com,0,
+120001,Up9NUVQnKIl_3wpb,,szeretnék gy olyan rendszert ahol autókat tudok árulni magyarországon és márkakereskedést is indítanék. márkaszervízben is gondolkodom külföldiek számára mert beszélek angolul. nincs még tapasztalatom benne,medium,pending_payment,2026-01-03 12:17:09,2026-01-03 12:17:09,,0,
+120002,yXpZTDq2AnCdMfK4,1,"You are an elite UX strategist with 15+ years of experience across complex, data-heavy products (finance, SaaS, enterprise, internal tools).
+Your job is to generate a complete, execution-ready UX solution plan that automatically adapts to the complexity, scope, audience, and constraints of any given problem.
+═══════════════════════════════════════════════════════════════════",medium,pending_payment,2026-01-03 12:19:19,2026-01-03 12:19:19,barnanorbert66@gmail.com,0,

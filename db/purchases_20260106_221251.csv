@@ -1,0 +1,6 @@
+id,sessionId,userId,tier,amountUsd,amountCrypto,cryptoCurrency,paymentMethod,paymentStatus,stripePaymentIntentId,coinbaseChargeId,coinbaseChargeCode,walletAddress,createdAt,completedAt,paypalOrderId,paypalCaptureId
+1,83EYgH_1aMtDQF0u,1,standard,29.00,,,lemonsqueezy,pending,,,,,2025-12-30 23:48:16,,,
+30001,80RD8pX5Du9IjYnR,1,standard,29.00,,,nowpayments,pending,,,,,2026-01-01 01:43:46,,,
+60001,83EYgH_1aMtDQF0u,1,standard,29.00,,,nowpayments,pending,,,,,2026-01-02 19:27:14,,,
+90001,Up9NUVQnKIl_3wpb,,medium,99.00,,,nowpayments,pending,,,,,2026-01-03 12:17:27,,,
+90002,yXpZTDq2AnCdMfK4,1,medium,99.00,,,nowpayments,pending,,,,,2026-01-03 12:19:26,,,

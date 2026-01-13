@@ -120,11 +120,11 @@ function DashboardLayoutContent({
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
-  
+
   // Wallet state for admin detection
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const hasMetaMask = typeof window !== "undefined" && typeof (window as any).ethereum !== "undefined";
-  
+
   // Check for existing wallet connection on mount
   useEffect(() => {
     const checkWalletConnection = async () => {
@@ -141,7 +141,7 @@ function DashboardLayoutContent({
     };
     checkWalletConnection();
   }, [hasMetaMask]);
-  
+
   // Listen for account changes
   useEffect(() => {
     if (hasMetaMask) {
@@ -152,16 +152,16 @@ function DashboardLayoutContent({
           setWalletAddress(accounts[0].toLowerCase());
         }
       };
-      
+
       (window as any).ethereum.on("accountsChanged", handleAccountsChanged);
       return () => {
         (window as any).ethereum.removeListener("accountsChanged", handleAccountsChanged);
       };
     }
   }, [hasMetaMask]);
-  
+
   const isAdmin = walletAddress === ADMIN_WALLET && ADMIN_WALLET !== "";
-  
+
   // Filter menu items based on user role
   const filteredMenuItems = menuItems.filter(item => {
     // Admin-only items only visible to admin wallet
@@ -169,7 +169,7 @@ function DashboardLayoutContent({
     // Demo-only items visible to everyone
     return true;
   });
-  
+
   const activeMenuItem = filteredMenuItems.find(item => item.path === location);
 
   useEffect(() => {

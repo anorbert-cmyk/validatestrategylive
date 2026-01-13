@@ -276,10 +276,10 @@ export async function sendAnalysisReadyEmail(params: AnalysisReadyEmailParams): 
     }
 
     const data = await response.json();
-    console.log(`[Email] ${tierConfig.tierName} tier analysis email sent successfully`, { 
-      to: params.to, 
+    console.log(`[Email] ${tierConfig.tierName} tier analysis email sent successfully`, {
+      to: params.to,
       tier: params.tier,
-      emailId: data?.id 
+      emailId: data?.id
     });
     return true;
 
@@ -437,6 +437,141 @@ What you'll unlock:
 
   } catch (error) {
     console.error('[Email] Verification email sending failed', error);
+    return false;
+  }
+}
+
+// ===========================================
+// MAGIC LINK EMAIL
+// ===========================================
+
+interface MagicLinkEmailParams {
+  to: string;
+  magicLinkUrl: string;
+}
+
+/**
+ * Send magic link for passwordless login
+ */
+export async function sendMagicLinkEmail(to: string, magicLinkUrl: string): Promise<boolean> {
+  const apiKey = getResendApiKey();
+
+  if (!apiKey) {
+    console.error('[Email] RESEND_API_KEY not configured');
+    return false;
+  }
+
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: `ValidateStrategy <${fromEmail}>`,
+        to: [to],
+        subject: '✨ Your Magic Link to ValidateStrategy',
+        html: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Magic Link</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #0f0f1a; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; font-size: 16px; line-height: 1.6; color: #e0e0e0;">
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="width: 100%; background-color: #0f0f1a; padding: 40px 0;">
+        <tr>
+            <td align="center">
+                <table role="presentation" style="max-width: 600px; width: 100%;">
+                    <tr>
+                        <td>
+                            <!-- MAIN CARD -->
+                            <div style="background: linear-gradient(145deg, #1a1a2e 0%, #16162a 100%); border-radius: 16px; border: 1px solid rgba(139, 92, 246, 0.2); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4); overflow: hidden;">
+                                
+                                <!-- HEADER -->
+                                <div style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%); padding: 30px; text-align: center; border-bottom: 1px solid rgba(139, 92, 246, 0.2);">
+                                    <div style="font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">
+                                        ⚡ ValidateStrategy
+                                    </div>
+                                    <div style="font-size: 12px; color: #8b5cf6; text-transform: uppercase; letter-spacing: 2px; margin-top: 5px;">
+                                        Passwordless Login
+                                    </div>
+                                </div>
+
+                                <!-- CONTENT -->
+                                <div style="padding: 40px 30px; text-align: center;">
+                                    
+                                    <!-- ICON -->
+                                    <div style="margin-bottom: 25px;">
+                                        <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); border-radius: 50%; margin: 0 auto; display: flex; align-items: center; justify-content: center;">
+                                            <span style="font-size: 36px;">✨</span>
+                                        </div>
+                                    </div>
+
+                                    <h1 style="color: #ffffff; font-size: 24px; font-weight: 800; margin: 0 0 15px; letter-spacing: -0.5px;">Log in to ValidateStrategy</h1>
+                                    <p style="margin: 0 0 30px; color: #a0a0b0; font-size: 16px;">Click the button below to sign in instantly. No password required.</p>
+
+                                    <!-- BUTTON -->
+                                    <div style="margin: 30px 0;">
+                                        <a href="${magicLinkUrl}" target="_blank" style="background: linear-gradient(90deg, #8b5cf6 0%, #6366f1 100%); border-radius: 50px; color: #ffffff; display: inline-block; font-size: 16px; font-weight: bold; line-height: 54px; text-align: center; text-decoration: none; width: 260px; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);">
+                                            Sign In Now →
+                                        </a>
+                                    </div>
+                                    
+                                    <p style="font-size: 13px; color: #6b6b80; margin-top: 20px;">
+                                        This link expires in 72 hours.<br>
+                                        If the button doesn't work, copy this URL:<br>
+                                        <span style="color: #8b5cf6; word-break: break-all; font-size: 11px;">${magicLinkUrl}</span>
+                                    </p>
+
+                                </div>
+                            </div>
+
+                            <!-- FOOTER -->
+                            <div style="margin-top: 30px; text-align: center;">
+                                <p style="color: #6b6b80; font-size: 12px;">
+                                    © ValidateStrategy • AI-Powered Strategic Analysis<br>
+                                    If you didn't reqest this, you can ignore this email.
+                                </p>
+                            </div>
+
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>`,
+        text: `Log in to ValidateStrategy
+
+Click your magic link below to sign in instantly:
+
+${magicLinkUrl}
+
+This link expires in 72 hours.
+If you didn't request this, you can safely ignore this email.
+
+© ValidateStrategy
+`
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('[Email] Failed to send magic link email:', errorData);
+      return false;
+    }
+
+    const data = await response.json();
+    console.log('[Email] Magic link email sent successfully', { to: to, emailId: data?.id });
+    return true;
+
+  } catch (error) {
+    console.error('[Email] Magic link email sending failed', error);
     return false;
   }
 }

@@ -399,7 +399,7 @@ export const analysisOperations = mysqlTable("analysis_operations", {
   sessionId: varchar("sessionId", { length: 64 }).notNull(),
   operationId: varchar("operationId", { length: 64 }).notNull().unique(), // UUID for each operation attempt
   tier: tierEnum.notNull(),
-  
+
   // State machine tracking
   state: mysqlEnum("operationState", [
     "initialized",      // Operation created, waiting to start
@@ -410,28 +410,28 @@ export const analysisOperations = mysqlTable("analysis_operations", {
     "completed",       // All parts successfully generated
     "cancelled"        // Manually cancelled by admin
   ]).default("initialized").notNull(),
-  
+
   // Progress tracking
   totalParts: int("totalParts").notNull(), // 1 for Observer, 2 for Insider, 6 for Syndicate
   completedParts: int("completedParts").default(0).notNull(),
   currentPart: int("currentPart").default(0).notNull(), // 0 = not started
-  
+
   // Timing
   startedAt: timestamp("startedAt"),
   lastPartCompletedAt: timestamp("lastPartCompletedAt"),
   completedAt: timestamp("completedAt"),
   estimatedCompletionAt: timestamp("estimatedCompletionAt"),
-  
+
   // Error tracking
   lastError: text("lastError"),
   lastErrorAt: timestamp("lastErrorAt"),
   failedPart: int("failedPart"), // Which part failed
   retryCount: int("retryCount").default(0).notNull(),
-  
+
   // Metadata
   triggeredBy: mysqlEnum("triggeredBy", ["user", "system", "admin", "retry_queue"]).default("user").notNull(),
   adminNotes: text("adminNotes"),
-  
+
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -447,7 +447,7 @@ export const analysisOperationEvents = mysqlTable("analysis_operation_events", {
   id: int("id").autoincrement().primaryKey(),
   operationId: varchar("operationId", { length: 64 }).notNull(),
   sessionId: varchar("sessionId", { length: 64 }).notNull(),
-  
+
   // Event details
   eventType: mysqlEnum("eventType", [
     "operation_started",
@@ -462,27 +462,27 @@ export const analysisOperationEvents = mysqlTable("analysis_operation_events", {
     "operation_retried",
     "admin_intervention"
   ]).notNull(),
-  
+
   // Context
   partNumber: int("partNumber"), // Which part this event relates to
   previousState: varchar("previousState", { length: 32 }),
   newState: varchar("newState", { length: 32 }),
-  
+
   // Error details (for failure events)
   errorCode: varchar("errorCode", { length: 64 }),
   errorMessage: text("errorMessage"),
-  
+
   // Performance metrics
   durationMs: int("durationMs"), // Duration of the part/operation
   tokenCount: int("tokenCount"), // Tokens generated
-  
+
   // Actor tracking
   actorType: mysqlEnum("actorType", ["system", "admin", "user"]).default("system").notNull(),
   actorId: varchar("actorId", { length: 64 }), // Admin wallet or user ID
-  
+
   // Additional context
   metadata: json("metadata"),
-  
+
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
@@ -494,10 +494,10 @@ export type InsertAnalysisOperationEvent = typeof analysisOperationEvents.$infer
  */
 export const adminAuditLog = mysqlTable("admin_audit_log", {
   id: int("id").autoincrement().primaryKey(),
-  
+
   // Admin identification
   adminWallet: varchar("adminWallet", { length: 42 }).notNull(),
-  
+
   // Action details
   action: mysqlEnum("action", [
     "view_analysis",
@@ -512,24 +512,60 @@ export const adminAuditLog = mysqlTable("admin_audit_log", {
     "export_data",
     "other"
   ]).notNull(),
-  
+
   // Target
   targetType: mysqlEnum("targetType", ["analysis", "operation", "user", "system"]).notNull(),
   targetId: varchar("targetId", { length: 64 }), // sessionId, operationId, userId, etc.
-  
+
   // Request details
   requestDetails: json("requestDetails"), // Parameters passed to the action
-  
+
   // Result
   success: boolean("success").default(true).notNull(),
   resultDetails: json("resultDetails"), // Response or error details
-  
+
   // Context
   ipAddress: varchar("ipAddress", { length: 45 }),
   userAgent: text("userAgent"),
-  
+
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
 export type AdminAuditLogEntry = typeof adminAuditLog.$inferSelect;
 export type InsertAdminAuditLogEntry = typeof adminAuditLog.$inferInsert;
+
+/**
+ * Magic Link Tokens - Passwordless authentication tokens
+ * Used for email-based login after Stripe payment
+ */
+export const magicLinkTokens = mysqlTable("magic_link_tokens", {
+  id: int("id").autoincrement().primaryKey(),
+  token: varchar("token", { length: 64 }).notNull().unique(),
+  email: varchar("email", { length: 320 }).notNull(),
+  sessionId: varchar("sessionId", { length: 64 }), // Links to analysis session if from payment
+  purchaseId: int("purchaseId").references(() => purchases.id),
+  isUsed: boolean("isUsed").default(false).notNull(),
+  usedAt: timestamp("usedAt"),
+  expiresAt: timestamp("expiresAt").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type MagicLinkToken = typeof magicLinkTokens.$inferSelect;
+export type InsertMagicLinkToken = typeof magicLinkTokens.$inferInsert;
+
+/**
+ * SIWE (Sign-In With Ethereum) Nonces - Anti-replay for wallet auth
+ * Stores nonces for wallet signature verification
+ */
+export const siweNonces = mysqlTable("siwe_nonces", {
+  id: int("id").autoincrement().primaryKey(),
+  nonce: varchar("nonce", { length: 64 }).notNull().unique(),
+  walletAddress: varchar("walletAddress", { length: 42 }),
+  isUsed: boolean("isUsed").default(false).notNull(),
+  usedAt: timestamp("usedAt"),
+  expiresAt: timestamp("expiresAt").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type SiweNonce = typeof siweNonces.$inferSelect;
+export type InsertSiweNonce = typeof siweNonces.$inferInsert;

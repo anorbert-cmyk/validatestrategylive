@@ -4,45 +4,59 @@
  */
 
 import { Request, Response, NextFunction } from "express";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 
-// In-memory rate limiter (for production, use Redis)
-const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+// Re-export rateLimit for use in other files if needed
+export { rateLimit };
 
-interface RateLimitConfig {
-  windowMs: number;
-  maxRequests: number;
-}
-
-const defaultConfig: RateLimitConfig = {
+// Configuration for rate limiters
+const defaultConfig = {
   windowMs: 15 * 60 * 1000, // 15 minutes
-  maxRequests: 100,
+  limit: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  message: { error: "Too many requests", retryAfter: true },
 };
 
-const strictConfig: RateLimitConfig = {
+const strictConfig = {
   windowMs: 60 * 1000, // 1 minute
-  maxRequests: 5, // Reduced from 10 for sensitive endpoints
+  limit: 5, // Reduced from 10 for sensitive endpoints
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests", retryAfter: true },
 };
 
 // Payment endpoints - reasonable limits (not too strict for legitimate users)
-const paymentConfig: RateLimitConfig = {
+const paymentConfig = {
   windowMs: 60 * 1000, // 1 minute
-  maxRequests: 10, // 10 payment attempts per minute (allows retries)
+  limit: 10, // 10 payment attempts per minute (allows retries)
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests", retryAfter: true },
 };
 
 // Analysis config (Perplexity API costs money, but paid users should have good UX)
-const analysisConfig: RateLimitConfig = {
+const analysisConfig = {
   windowMs: 60 * 60 * 1000, // 1 hour
-  maxRequests: 20, // Max 20 analyses per hour per IP (reasonable for power users)
+  limit: 20, // Max 20 analyses per hour per IP (reasonable for power users)
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests", retryAfter: true },
 };
 
 // Email submission config (prevent spam)
-const emailConfig: RateLimitConfig = {
+const emailConfig = {
   windowMs: 60 * 60 * 1000, // 1 hour
-  maxRequests: 5, // Max 5 email submissions per hour
+  limit: 5, // Max 5 email submissions per hour
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests", retryAfter: true },
 };
 
 /**
- * Get client IP address
+ * Get client IP address helper (express-rate-limit handles this automatically usually,
+ * but if we need custom key generator)
  */
 function getClientIp(req: Request): string {
   const forwarded = req.headers["x-forwarded-for"];
@@ -50,40 +64,6 @@ function getClientIp(req: Request): string {
     return forwarded.split(",")[0].trim();
   }
   return req.ip || req.socket.remoteAddress || "unknown";
-}
-
-/**
- * Rate limiting middleware factory
- */
-export function rateLimit(config: RateLimitConfig = defaultConfig) {
-  return (req: Request, res: Response, next: NextFunction) => {
-    const ip = getClientIp(req);
-    const key = `${ip}:${req.path}`;
-    const now = Date.now();
-
-    const record = rateLimitStore.get(key);
-
-    if (!record || now > record.resetTime) {
-      // Create new record
-      rateLimitStore.set(key, {
-        count: 1,
-        resetTime: now + config.windowMs,
-      });
-      return next();
-    }
-
-    if (record.count >= config.maxRequests) {
-      const retryAfter = Math.ceil((record.resetTime - now) / 1000);
-      res.setHeader("Retry-After", retryAfter.toString());
-      return res.status(429).json({
-        error: "Too many requests",
-        retryAfter,
-      });
-    }
-
-    record.count++;
-    return next();
-  };
 }
 
 /**
@@ -101,18 +81,20 @@ export const apiRateLimit = rateLimit(defaultConfig);
  */
 export const webhookRateLimit = rateLimit({
   windowMs: 60 * 1000,
-  maxRequests: 50,
+  limit: 50,
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 /**
  * Payment rate limiting (ultra-strict to prevent fraud)
- * Only 3 payment attempts per minute per IP
+ * Only 3 payment attempts per minute per IP - wait, config says 10. Keeping 10 as per config.
  */
 export const paymentRateLimit = rateLimit(paymentConfig);
 
 /**
  * Analysis rate limiting (protects expensive Perplexity API)
- * Only 10 analyses per hour per IP
+ * Only 10 analyses per hour per IP - wait, config says 20. Keeping 20 as per config.
  */
 export const analysisRateLimit = rateLimit(analysisConfig);
 
@@ -123,43 +105,37 @@ export const analysisRateLimit = rateLimit(analysisConfig);
 export const emailRateLimit = rateLimit(emailConfig);
 
 /**
- * Security headers middleware
+ * Security headers middleware using Helmet
  */
-export function securityHeaders(req: Request, res: Response, next: NextFunction) {
-  // Prevent clickjacking
-  res.setHeader("X-Frame-Options", "DENY");
-  
-  // Prevent MIME type sniffing
-  res.setHeader("X-Content-Type-Options", "nosniff");
-  
-  // XSS protection (legacy browsers)
-  res.setHeader("X-XSS-Protection", "1; mode=block");
-  
-  // Referrer policy
-  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
-  
-  // Content Security Policy
-  res.setHeader(
-    "Content-Security-Policy",
-    "default-src 'self'; " +
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://commerce.coinbase.com; " +
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-    "font-src 'self' https://fonts.gstatic.com; " +
-    "img-src 'self' data: https:; " +
-    "connect-src 'self' https://api.stripe.com https://api.commerce.coinbase.com https://api.perplexity.ai; " +
-    "frame-src https://js.stripe.com https://commerce.coinbase.com;"
-  );
-  
-  // HSTS (only in production)
-  if (process.env.NODE_ENV === "production") {
-    res.setHeader(
-      "Strict-Transport-Security",
-      "max-age=31536000; includeSubDomains"
-    );
-  }
-  
-  next();
-}
+export const securityHeaders = helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://js.stripe.com", "https://commerce.coinbase.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'", "https://api.stripe.com", "https://api.commerce.coinbase.com", "https://api.perplexity.ai"],
+      frameSrc: ["https://js.stripe.com", "https://commerce.coinbase.com"],
+    },
+  },
+  crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow resources to be loaded by others if needed, or strict-origin
+  // strictTransportSecurity is enabled by default in helmet with reasonable defaults (15552000 seconds = 180 days)
+  // We can override if we want 1 year:
+  strictTransportSecurity: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true,
+  },
+  // Explicitly set Referrer-Policy to match audit recommendation
+  referrerPolicy: {
+    policy: "strict-origin-when-cross-origin",
+  },
+  // Explicitly set X-Frame-Options to DENY to match audit recommendation
+  xFrameOptions: {
+    action: "deny",
+  },
+});
 
 /**
  * Sanitize request body (basic XSS prevention)
@@ -219,16 +195,3 @@ export function requestLogger(req: Request, res: Response, next: NextFunction) {
   
   next();
 }
-
-/**
- * Clean up expired rate limit entries periodically
- */
-setInterval(() => {
-  const now = Date.now();
-  const entries = Array.from(rateLimitStore.entries());
-  for (const [key, record] of entries) {
-    if (now > record.resetTime) {
-      rateLimitStore.delete(key);
-    }
-  }
-}, 60 * 1000); // Clean up every minute

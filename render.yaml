@@ -1,0 +1,40 @@
+services:
+  # Main Web Service (Node.js/Express)
+  - type: web
+    name: validate-strategy-web
+    env: node
+    plan: starter
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+    autoDeploy: false
+
+  # Background Worker (Retry Queue)
+  - type: worker
+    name: validate-strategy-worker
+    env: node
+    plan: starter
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:worker
+    envVars:
+      - key: NODE_ENV
+        value: production
+    autoDeploy: false
+
+  # Cron Job (Email Sequence)
+  - type: cron
+    name: validate-strategy-email-cron
+    env: node
+    plan: starter
+    schedule: "0 9 * * *" # Runs every day at 9:00 AM UTC
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:cron
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+databases:
+  # We are using PlanetScale (external), so no managed database here.
+  # DATABASE_URL must be provided in the Environment Variables.

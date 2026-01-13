@@ -1,0 +1,1 @@
+id,sessionId,tier,problemStatement,email,retryCount,maxRetries,priority,lastError,lastAttemptAt,nextRetryAt,queueStatus,createdAt,updatedAt

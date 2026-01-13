@@ -182,6 +182,33 @@ export async function getAllPurchases(): Promise<Purchase[]> {
   return await db.select().from(purchases).orderBy(desc(purchases.createdAt));
 }
 
+/**
+ * Update purchase with wallet address from NOWPayments webhook
+ * Used for SIWE authentication - links wallet to purchase for history access
+ */
+export async function updatePurchaseWalletAddress(sessionId: string, walletAddress: string): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(purchases)
+    .set({ walletAddress: walletAddress.toLowerCase() })
+    .where(eq(purchases.sessionId, sessionId));
+}
+
+/**
+ * Get purchases by wallet address
+ * Used for SIWE authentication - returns all analyses purchased with this wallet
+ */
+export async function getPurchasesByWalletAddress(walletAddress: string): Promise<Purchase[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(purchases)
+    .where(and(
+      eq(purchases.walletAddress, walletAddress.toLowerCase()),
+      eq(purchases.paymentStatus, "completed")
+    ))
+    .orderBy(desc(purchases.createdAt));
+}
+
 // ============ ANALYSIS RESULT FUNCTIONS ============
 
 export async function createAnalysisResult(result: InsertAnalysisResult): Promise<void> {

@@ -21,8 +21,7 @@
   <!-- Preconnect to external origins for faster loading -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="dns-prefetch" href="https://api.manus.im" />
-  <link rel="dns-prefetch" href="https://manuscdn.com" />
+
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website" />
@@ -198,40 +197,55 @@
   <!-- DNS Prefetch for external resources -->
   <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
   <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
-  
+
   <!-- Preconnect for faster font loading -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  
+
   <!-- Preload critical fonts for LCP optimization -->
-  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
+  <link rel="preload" as="style"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
     rel="stylesheet" media="print" onload="this.media='all'" />
   <noscript>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet" />
   </noscript>
-  
+
   <!-- Critical CSS for above-the-fold content (loading state only) -->
   <style>
     /* Minimal critical CSS - only for initial loading spinner */
-    body { margin: 0; }
-    #root { min-height: 100vh; }
-    @keyframes critical-spin { to { transform: rotate(360deg); } }
-    .critical-loader { 
-      min-height: 100vh; 
-      display: flex; 
-      align-items: center; 
-      justify-content: center; 
-      background: #0a0a0a; 
+    body {
+      margin: 0;
     }
-    .critical-spinner { 
-      width: 2rem; 
-      height: 2rem; 
-      border: 2px solid #6366f1; 
-      border-top-color: transparent; 
-      border-radius: 50%; 
-      animation: critical-spin 1s linear infinite; 
+
+    #root {
+      min-height: 100vh;
+    }
+
+    @keyframes critical-spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .critical-loader {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0a0a0a;
+    }
+
+    .critical-spinner {
+      width: 2rem;
+      height: 2rem;
+      border: 2px solid #6366f1;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: critical-spin 1s linear infinite;
     }
   </style>
 </head>
@@ -242,7 +256,8 @@
     <div id="seo-fallback" style="position:absolute;left:-9999px;">
       <h1>ValidateStrategy - AI Product Validation in 24 Hours</h1>
       <h2>Stop Guessing. Validate Your Product Strategy with AI-Powered Analysis.</h2>
-      <p>Get boardroom-ready product strategy and UX validation backed by research from Nielsen Norman and Baymard Institute. Reduce risk, validate faster.</p>
+      <p>Get boardroom-ready product strategy and UX validation backed by research from Nielsen Norman and Baymard
+        Institute. Reduce risk, validate faster.</p>
     </div>
   </div>
   <script type="module" src="/src/main.tsx"></script>

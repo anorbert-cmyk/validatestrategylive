@@ -17,6 +17,7 @@ import {
   deleteChallenge,
   cleanupExpiredChallengesDb
 } from "../db";
+import { ENV } from "../_core/env";
 
 const SIGNATURE_VALIDITY_MS = 30 * 60 * 1000; // 30 minutes for better UX
 
@@ -128,7 +129,7 @@ export async function verifyAdminSignatureWithChallenge(
     const isAdmin = await isAdminWallet(recoveredAddress);
     if (!isAdmin) {
       // Also check environment variable for primary admin
-      const envAdminWallet = process.env.ADMIN_WALLET_ADDRESS;
+      const envAdminWallet = ENV.adminWalletAddress;
       if (!envAdminWallet || recoveredAddress.toLowerCase() !== envAdminWallet.toLowerCase()) {
         return {
           success: false,
@@ -232,7 +233,7 @@ export async function checkAdminStatus(address: string): Promise<boolean> {
   if (isDbAdmin) return true;
 
   // Check environment variable
-  const envAdminWallet = process.env.ADMIN_WALLET_ADDRESS;
+  const envAdminWallet = ENV.adminWalletAddress;
   if (envAdminWallet && address.toLowerCase() === envAdminWallet.toLowerCase()) {
     return true;
   }

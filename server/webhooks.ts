@@ -4,20 +4,21 @@
  */
 
 import { Router, Request, Response } from "express";
-import { 
-  verifyIPNSignature, 
-  parseIPNPayload, 
+import {
+  verifyIPNSignature,
+  parseIPNPayload,
   isPaymentConfirmed,
   isPaymentFailed,
-  PAYMENT_STATUS_DESCRIPTIONS 
+  PAYMENT_STATUS_DESCRIPTIONS
 } from "./services/nowPaymentsService";
-import { 
+import {
   updatePurchaseStatus,
   updateAnalysisSessionStatus,
   getAnalysisSessionById,
   createAnalysisResult,
   getPurchaseBySessionId,
   tryMarkWebhookProcessed,
+  updatePurchaseWalletAddress,
 } from "./db";
 import { notifyOwner } from "./_core/notification";
 import { getTierConfig, getTierPrice, isMultiPartTier } from "../shared/pricing";
@@ -30,6 +31,7 @@ import {
   trackAnalysisComplete,
   trackAnalysisFailure,
 } from "./services/safeOperationTracker";
+import { createMagicLinkToken, buildMagicLinkUrl } from "./auth/magicLink";
 
 const webhookRouter = Router();
 
@@ -39,9 +41,9 @@ const webhookRouter = Router();
  */
 webhookRouter.post("/nowpayments", async (req: Request, res: Response) => {
   console.log("[NOWPayments Webhook] Received IPN callback");
-  
+
   const signature = req.headers["x-nowpayments-sig"] as string;
-  
+
   if (!signature) {
     console.error("[NOWPayments Webhook] Missing signature header");
     return res.status(400).json({ error: "Missing signature" });
@@ -66,45 +68,51 @@ webhookRouter.post("/nowpayments", async (req: Request, res: Response) => {
     // Only process finished or failed payments
     if (isPaymentConfirmed(paymentStatus)) {
       console.log(`[NOWPayments Webhook] Payment CONFIRMED for session: ${sessionId}`);
-      
+
       // ATOMIC idempotency check - try to mark as processed first
       // This prevents race conditions when multiple webhooks arrive simultaneously
       const shouldProcess = await tryMarkWebhookProcessed(
-        webhookId, 
-        "nowpayments", 
-        sessionId, 
-        String(ipnData.payment_id), 
+        webhookId,
+        "nowpayments",
+        sessionId,
+        String(ipnData.payment_id),
         "completed"
       );
-      
+
       if (!shouldProcess) {
         console.log(`[NOWPayments Webhook] Webhook already processed (idempotency): ${webhookId}`);
         return res.json({ received: true, status: paymentStatus, duplicate: true });
       }
-      
+
       // Update purchase status
       await updatePurchaseStatus(sessionId, "completed", new Date());
-      
+
+      // Save wallet address for SIWE authentication (allows user to access history via wallet)
+      if (ipnData.pay_address) {
+        await updatePurchaseWalletAddress(sessionId, ipnData.pay_address);
+        console.log(`[NOWPayments Webhook] Saved wallet address: ${ipnData.pay_address}`);
+      }
+
       // Start the analysis - this is the critical step
       await startAnalysisAfterPayment(sessionId);
-      
+
       console.log(`[NOWPayments Webhook] Analysis started for session: ${sessionId}`);
     } else if (isPaymentFailed(paymentStatus)) {
       console.log(`[NOWPayments Webhook] Payment FAILED for session: ${sessionId}`);
-      
+
       // ATOMIC idempotency check for failed payments too
       const shouldProcess = await tryMarkWebhookProcessed(
-        webhookId, 
-        "nowpayments", 
-        sessionId, 
-        String(ipnData.payment_id), 
+        webhookId,
+        "nowpayments",
+        sessionId,
+        String(ipnData.payment_id),
         "failed"
       );
-      
+
       if (!shouldProcess) {
         return res.json({ received: true, status: paymentStatus, duplicate: true });
       }
-      
+
       await updatePurchaseStatus(sessionId, "failed");
       await updateAnalysisSessionStatus(sessionId, "failed");
     } else {
@@ -189,7 +197,7 @@ webhookRouter.post("/lemonsqueezy", async (req: Request, res: Response) => {
  */
 async function startAnalysisAfterPayment(sessionId: string) {
   const startTime = Date.now();
-  
+
   try {
     const session = await getAnalysisSessionById(sessionId);
     if (!session) {
@@ -199,7 +207,7 @@ async function startAnalysisAfterPayment(sessionId: string) {
 
     // Track analysis start (fire-and-forget)
     trackAnalysisStart(sessionId, session.tier, "system");
-    
+
     // Update session status to processing
     await updateAnalysisSessionStatus(sessionId, "processing");
 
@@ -231,7 +239,7 @@ async function startAnalysisAfterPayment(sessionId: string) {
         onPartComplete: async (partNum, content) => {
           // Track part completion (fire-and-forget)
           trackPartComplete(sessionId, partNum, content, Date.now() - startTime);
-          
+
           const partKey = `part${partNum}` as "part1" | "part2" | "part3" | "part4" | "part5" | "part6";
           await updateAnalysisResult(sessionId, { [partKey]: content });
         },
@@ -241,10 +249,10 @@ async function startAnalysisAfterPayment(sessionId: string) {
             generatedAt: new Date(result.generatedAt),
           });
           await updateAnalysisSessionStatus(sessionId, "completed");
-          
+
           // Track analysis completion (fire-and-forget)
           trackAnalysisComplete(sessionId, Date.now() - startTime);
-          
+
           // Send email notification with magic link
           if (userEmail && isEmailConfigured()) {
             const appUrl = process.env.VITE_APP_URL || 'https://validatestrategy.com';
@@ -263,7 +271,7 @@ async function startAnalysisAfterPayment(sessionId: string) {
         onError: async (error) => {
           // Track failure (fire-and-forget)
           trackAnalysisFailure(sessionId, error instanceof Error ? error : new Error(String(error)), 1);
-          
+
           await updateAnalysisSessionStatus(sessionId, "failed");
         },
       });
@@ -274,11 +282,11 @@ async function startAnalysisAfterPayment(sessionId: string) {
         generatedAt: new Date(result.generatedAt),
       });
       await updateAnalysisSessionStatus(sessionId, "completed");
-      
+
       // Track completion (fire-and-forget)
       trackPartComplete(sessionId, 1, result.content, Date.now() - startTime);
       trackAnalysisComplete(sessionId, Date.now() - startTime);
-      
+
       // Send email notification with magic link
       if (userEmail && isEmailConfigured()) {
         const appUrl = process.env.VITE_APP_URL || 'https://validatestrategy.com';
@@ -296,10 +304,10 @@ async function startAnalysisAfterPayment(sessionId: string) {
     }
   } catch (error) {
     console.error("[Analysis] Failed to start analysis:", error);
-    
+
     // Track failure (fire-and-forget)
     trackAnalysisFailure(sessionId, error instanceof Error ? error : new Error(String(error)), 1);
-    
+
     await updateAnalysisSessionStatus(sessionId, "failed");
   }
 }

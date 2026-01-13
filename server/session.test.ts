@@ -71,7 +71,8 @@ function createAuthenticatedContext(): TrpcContext {
       openId: "test-user",
       email: "test@example.com",
       name: "Test User",
-      loginMethod: "manus",
+      loginMethod: "magic_link",
+      walletAddress: null,
       role: "user",
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -190,7 +191,7 @@ describe("Session Router", () => {
 
     it("returns user analyses when authenticated", async () => {
       const { getAnalysisSessionsByUserId, getAnalysisResultsByUserId, getPurchasesByUserId } = await import("./db");
-      
+
       (getAnalysisSessionsByUserId as any).mockResolvedValueOnce([
         {
           id: 1,
