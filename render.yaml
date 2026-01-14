@@ -5,10 +5,20 @@ services:
     env: node
     plan: starter
     buildCommand: npm install && npm run build
-    startCommand: npm run start
+    startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
+      - key: DATABASE_URL
+        sync: false # Must be set in Dashboard
+      - key: PERPLEXITY_API_KEY
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: NOWPAYMENTS_API_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
     autoDeploy: false
 
   # Background Worker (Retry Queue)
@@ -21,6 +31,8 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: DATABASE_URL
+        sync: false
     autoDeploy: false
 
   # Cron Job (Email Sequence)
@@ -34,7 +46,5 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-
-databases:
-  # We are using PlanetScale (external), so no managed database here.
-  # DATABASE_URL must be provided in the Environment Variables.
+      - key: DATABASE_URL
+        sync: false
