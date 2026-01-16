@@ -22,29 +22,8 @@ export default defineConfig({
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
     sourcemap: true, // Enable source maps for debugging
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          // Core React - needed everywhere (must be first to ensure proper initialization)
-          if (id.includes('react-dom') || id.includes('react/') || id.includes('node_modules/react/')) {
-            return 'vendor-react';
-          }
-          // Router - small, needed for navigation
-          if (id.includes('wouter')) {
-            return 'vendor-react';
-          }
-          // UI components - lazy load with pages that use them
-          if (id.includes('@radix-ui')) {
-            return 'vendor-ui';
-          }
-          // Utility functions - small, can be in main bundle
-          if (id.includes('clsx') || id.includes('tailwind-merge') || id.includes('class-variance-authority')) {
-            return 'vendor-utils';
-          }
-        },
-      },
-    },
-    // Optimize chunk size
+    // Removed manualChunks - was causing React duplication with Radix UI
+    // Let Rollup handle chunking automatically with dedupe
     chunkSizeWarningLimit: 500,
   },
   server: {
