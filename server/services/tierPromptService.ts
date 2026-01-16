@@ -190,6 +190,19 @@ Select and justify appropriate research methodologies. For each method provide:
 - [ ] Action 2: [Specific task with responsible role]
 - [ ] Action 3: [Specific task with success criteria]
 
+## 📦 STATE_HANDOFF_PART_1 (MANDATORY - Output this JSON block exactly)
+\`\`\`json
+// STATE_HANDOFF_PART_1
+{
+  "detected_industry": "[Industry name]",
+  "detected_persona": "[Persona type]",
+  "core_jtbd": "[1-sentence JTBD]",
+  "top_3_pain_points": ["Pain 1", "Pain 2", "Pain 3"],
+  "competitor_count": 3,
+  "highest_risk_assumption": { "id": "A1", "statement": "...", "confidence": "High|Medium|Low" }
+}
+\`\`\`
+
 **End with:** \`[✅ PART 1 COMPLETE]\``,
 
   2: `### PART 2 – Strategic Design & Roadmap (~5,000 tokens)
@@ -355,6 +368,20 @@ OUTPUT THESE SECTIONS:
 ## Key Findings Summary (for subsequent parts)
 150-word summary: Core problem, primary persona, industry context, top 3 assumptions, War Room insights, Pre-Mortem risks.
 
+## 📦 STATE_HANDOFF_PART_1 (MANDATORY - Output this JSON block exactly)
+\`\`\`json
+// STATE_HANDOFF_PART_1
+{
+  "detected_industry": "[Fintech|Healthcare|E-commerce|SaaS|Marketplace|InternalTools|Web3]",
+  "detected_persona": "[SoloFounder|DesignLead|PM|Enterprise|Web3Native]",
+  "core_jtbd": "[1-sentence JTBD from Core Problem Statement]",
+  "top_3_pain_points": ["Pain 1", "Pain 2", "Pain 3"],
+  "highest_risk_assumption": { "id": "A1", "statement": "...", "confidence": "High|Medium|Low" },
+  "competitor_gap": "[Primary differentiator from War Room]",
+  "pre_mortem_risks": ["Risk 1", "Risk 2", "Risk 3"]
+}
+\`\`\`
+
 **End with:** \`[✅ PART 1 COMPLETE - Discovery & Problem Analysis]\``,
 
   2: `### PART 2 OF 6: COMPETITOR DEEP-DIVE (~6,500 tokens)
@@ -395,6 +422,19 @@ Include 8-12 relevant features.
 
 ## Competitor Intelligence Summary (for subsequent parts)
 150 words: Top 3 competitors, primary differentiation, patterns to adopt/avoid, pricing positioning.
+
+## 📦 STATE_HANDOFF_PART_2 (MANDATORY - Output this JSON block exactly)
+\`\`\`json
+// STATE_HANDOFF_PART_2
+{
+  "competitor_count": 5,
+  "competitor_summary": "[Top 3 competitor names and their key positioning]",
+  "primary_differentiator": "[Your main opportunity based on competitor gaps]",
+  "patterns_to_adopt": ["Pattern 1", "Pattern 2"],
+  "patterns_to_avoid": ["Pattern 1"],
+  "pricing_positioning": "[Premium|Mid-market|Budget|Freemium]"
+}
+\`\`\`
 
 **End with:** \`[✅ PART 2 COMPLETE - Competitor Deep-Dive]\``,
 
@@ -457,6 +497,18 @@ For solo founders: Modified approach with AI tools and async practices.
 
 ## Roadmap Summary (for subsequent parts)
 150 words: Timeline, critical path, biggest risks, key decisions, resource bottlenecks.
+
+## 📦 STATE_HANDOFF_PART_3 (MANDATORY - Output this JSON block exactly)
+\`\`\`json
+// STATE_HANDOFF_PART_3
+{
+  "timeline_type": "QuickWin|Medium|Strategic",
+  "phase_count": 4,
+  "critical_milestones": ["Milestone 1", "Milestone 2", "Milestone 3"],
+  "top_error_scenarios": ["Error 1", "Error 2", "Error 3"],
+  "resource_bottlenecks": ["Bottleneck 1"]
+}
+\`\`\`
 
 **End with:** \`[✅ PART 3 COMPLETE - Strategic Roadmap]\``,
 
@@ -551,6 +603,20 @@ For each prompt include:
 3. **Strategic Rationale:** How this design solves the linked Pain Point
 4. **Customization Notes**
 
+## 📦 STATE_HANDOFF_PART_4 (MANDATORY - Output this JSON block exactly)
+\`\`\`json
+// STATE_HANDOFF_PART_4
+{
+  "screens_designed": ["Onboarding", "Dashboard", "Core Action", "Settings", "Navigation"],
+  "design_system_tokens": {
+    "primary_color": "#HEXCODE",
+    "typography": "Font Name",
+    "spacing_base": "8px"
+  },
+  "pain_points_addressed": ["Pain Point 1", "Pain Point 2"]
+}
+\`\`\`
+
 **End with:** \`[✅ PART 4 COMPLETE - 5 Core Design Prompts]\``,
 
   5: `### PART 5 OF 6: 5 ADVANCED DESIGN PROMPTS + EDGE CASES (~7,500 tokens)
@@ -623,6 +689,16 @@ For each prompt include:
 2. **Full Prompt Text** (copy-paste ready using FIGMA-PROMPT structure)
 3. **Strategic Rationale:** How this design handles edge cases
 4. **Customization Notes**
+
+## 📦 STATE_HANDOFF_PART_5 (MANDATORY - Output this JSON block exactly)
+\`\`\`json
+// STATE_HANDOFF_PART_5
+{
+  "edge_cases_covered": ["Empty State", "Error State", "Loading", "Notifications", "Industry-Specific"],
+  "industry_specific_screens": ["Screen Name 1", "Screen Name 2"],
+  "accessibility_notes": ["WCAG AA compliant", "44x44px touch targets"]
+}
+\`\`\`
 
 **End with:** \`[✅ PART 5 COMPLETE - 5 Advanced Design Prompts + Edge Cases]\``,
 

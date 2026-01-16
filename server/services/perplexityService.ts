@@ -231,16 +231,16 @@ export async function generateSingleAnalysis(
 ): Promise<SingleAnalysisResult> {
   // Sanitize input
   const { sanitized, flags } = sanitizeInput(problemStatement);
-  
+
   if (flags.length > 0) {
     console.warn('[Perplexity] Potential prompt injection attempt detected:', flags.length, 'patterns');
   }
 
   // Use new tier-specific prompts
-  const systemPrompt = tier === "standard" 
+  const systemPrompt = tier === "standard"
     ? OBSERVER_SYSTEM_PROMPT
     : INSIDER_SYSTEM_PROMPT;
-  
+
   const userPrompt = tier === "standard"
     ? getObserverPrompt(sanitized)
     : MEDIUM_PROMPT(sanitized); // Medium tier now uses 2-part, but keep fallback
@@ -253,8 +253,8 @@ export async function generateSingleAnalysis(
         role: "system",
         content: systemPrompt
       },
-      { 
-        role: "user", 
+      {
+        role: "user",
         content: userPrompt
       },
     ],
@@ -281,7 +281,7 @@ export async function generateInsiderAnalysis(
 ): Promise<InsiderResult> {
   // Sanitize input
   const { sanitized, flags } = sanitizeInput(problemStatement);
-  
+
   if (flags.length > 0) {
     console.warn('[Perplexity] Potential prompt injection attempt detected:', flags.length, 'patterns');
   }
@@ -293,27 +293,40 @@ export async function generateInsiderAnalysis(
     generatedAt: 0,
   };
 
-  // Conversation history to maintain context
-  const conversationHistory: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
+  // RLM Pattern: Base messages (system prompt only) - NOT accumulating full history
+  const baseMessages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
     { role: "system", content: INSIDER_SYSTEM_PROMPT },
   ];
+
+  // STATE_HANDOFF from Part 1 (for Part 2 context)
+  let stateHandoffPart1 = "";
 
   try {
     // Process each of the 2 parts sequentially
     for (let partNum = 1; partNum <= 2; partNum++) {
       console.log(`[Perplexity] Starting Insider Part ${partNum}/2 generation`);
 
+      // RLM Pattern: Build fresh message array for this part
+      const messagesForThisPart = [...baseMessages];
+
+      // Part 2: Inject STATE_HANDOFF from Part 1
+      if (partNum === 2 && stateHandoffPart1) {
+        messagesForThisPart.push({
+          role: "user",
+          content: `CONTEXT FROM PART 1 (STATE_HANDOFF):\n${stateHandoffPart1}\n\n---\nUSER PROBLEM: ${sanitized}`
+        });
+      }
+
       // Build the prompt for this part
-      const userPrompt = partNum === 1 
+      const userPrompt = partNum === 1
         ? getInsiderInitialPrompt(sanitized)
         : getInsiderContinuePrompt(2);
 
-      // Add user prompt to conversation history
-      conversationHistory.push({ role: "user", content: userPrompt });
+      messagesForThisPart.push({ role: "user", content: userPrompt });
 
-      // Make API call with full conversation context
+      // Make API call with MINIMAL context (RLM pattern)
       const response = await invokeLLM({
-        messages: conversationHistory,
+        messages: messagesForThisPart,
       });
 
       const rawContent = response.choices[0]?.message?.content;
@@ -322,12 +335,12 @@ export async function generateInsiderAnalysis(
       // Store the result
       if (partNum === 1) {
         result.part1 = partContent;
+        // RLM Pattern: Extract STATE_HANDOFF for Part 2
+        stateHandoffPart1 = extractStateHandoff(partContent, 1);
+        console.log(`[Perplexity] Extracted Insider STATE_HANDOFF, size: ${stateHandoffPart1.length} chars`);
       } else {
         result.part2 = partContent;
       }
-
-      // Add assistant response to conversation history for next part
-      conversationHistory.push({ role: "assistant", content: partContent });
 
       // Notify part completion
       callbacks?.onPartComplete?.(partNum, partContent);
@@ -393,7 +406,7 @@ export async function generateMultiPartAnalysis(
 ): Promise<MultiPartResult> {
   // Sanitize input
   const { sanitized, flags } = sanitizeInput(problemStatement);
-  
+
   if (flags.length > 0) {
     console.warn('[Perplexity] Potential prompt injection attempt detected:', flags.length, 'patterns');
   }
@@ -409,10 +422,13 @@ export async function generateMultiPartAnalysis(
     generatedAt: 0,
   };
 
-  // Conversation history to maintain context using Syndicate-specific system prompt
-  const conversationHistory: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
+  // RLM Pattern: Base messages (system prompt only) - NOT accumulating full history
+  const baseMessages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
     { role: "system", content: SYNDICATE_SYSTEM_PROMPT },
   ];
+
+  // Accumulated STATE_HANDOFF blocks (not full responses) - the RLM "state" object
+  let accumulatedState = "";
 
   // Part titles for logging and markdown assembly
   const partTitles: Record<number, string> = {
@@ -429,28 +445,43 @@ export async function generateMultiPartAnalysis(
     for (let partNum = 1; partNum <= 6; partNum++) {
       console.log(`[Perplexity] Starting Syndicate Part ${partNum}/6: ${partTitles[partNum]}`);
 
+      // RLM Pattern: Build fresh message array for this part (not accumulating full history)
+      const messagesForThisPart = [...baseMessages];
+
+      // Inject accumulated STATE_HANDOFF as context (if any previous parts completed)
+      if (accumulatedState) {
+        messagesForThisPart.push({
+          role: "user",
+          content: `CONTEXT FROM PREVIOUS PARTS (STATE_HANDOFF blocks):\n${accumulatedState}\n\n---\nUSER PROBLEM: ${sanitized}`
+        });
+      }
+
       // Build the prompt for this part using Syndicate-specific prompts
-      const userPrompt = partNum === 1 
+      const userPrompt = partNum === 1
         ? getSyndicateInitialPrompt(sanitized)
-        : getSyndicateContinuePrompt(partNum, extractPreviousSummary(result, partNum - 1));
+        : getSyndicateContinuePrompt(partNum, ""); // Context now comes from accumulatedState above
 
-      // Add user prompt to conversation history
-      conversationHistory.push({ role: "user", content: userPrompt });
+      messagesForThisPart.push({ role: "user", content: userPrompt });
 
-      // Make API call with full conversation context
+      // Make API call with MINIMAL context (RLM pattern - not full history)
       const response = await invokeLLM({
-        messages: conversationHistory,
+        messages: messagesForThisPart,
       });
 
       const rawContent = response.choices[0]?.message?.content;
       const partContent = typeof rawContent === "string" ? rawContent : "";
 
-      // Store the result using dynamic key
+      // Store the FULL result (user still gets everything)
       const partKey = `part${partNum}` as keyof Pick<MultiPartResult, "part1" | "part2" | "part3" | "part4" | "part5" | "part6">;
       result[partKey] = partContent;
 
-      // Add assistant response to conversation history for next part
-      conversationHistory.push({ role: "assistant", content: partContent });
+      // RLM Pattern: Extract and accumulate ONLY the STATE_HANDOFF, not full response
+      // This is the key difference from traditional conversation history
+      if (partNum < 6) { // No need to extract state from final part
+        const stateHandoff = extractStateHandoff(partContent, partNum);
+        accumulatedState += `\n\n${stateHandoff}`;
+        console.log(`[Perplexity] Accumulated state size: ${accumulatedState.length} chars`);
+      }
 
       // Notify part completion
       callbacks?.onPartComplete?.(partNum, partContent);
@@ -499,11 +530,43 @@ export async function generateMultiPartAnalysis(
 }
 
 /**
+ * Extract STATE_HANDOFF block from a completed part's output
+ * RLM Pattern: Returns structured state instead of full response for memory efficiency
+ * 
+ * Priority:
+ * 1. Explicit STATE_HANDOFF JSON block (preferred)
+ * 2. Key Findings Summary section (fallback)
+ * 3. First 400 chars of content (last resort)
+ */
+function extractStateHandoff(partContent: string, partNum: number): string {
+  // Try to find explicit STATE_HANDOFF block
+  const stateHandoffPattern = /```json\s*\/\/\s*STATE_HANDOFF_PART_\d[\s\S]*?```/i;
+  const match = partContent.match(stateHandoffPattern);
+
+  if (match) {
+    console.log(`[Perplexity] Extracted explicit STATE_HANDOFF for Part ${partNum}`);
+    return match[0];
+  }
+
+  // Fallback: Extract Key Findings Summary section
+  console.warn(`[Perplexity] No explicit STATE_HANDOFF found for Part ${partNum}, using fallback extraction`);
+  const summaryMatch = partContent.match(/## (?:Key Findings Summary|Summary|Roadmap Summary|Competitor Intelligence Summary)[\s\S]*?(?=\n## |\n\[✅|$)/i);
+
+  if (summaryMatch) {
+    return `// STATE_HANDOFF_PART_${partNum} (auto-extracted from summary)\n${summaryMatch[0].substring(0, 600)}`;
+  }
+
+  // Last resort: first 400 chars
+  return `// STATE_HANDOFF_PART_${partNum} (auto-extracted, no summary found)\n${partContent.substring(0, 400)}...`;
+}
+
+/**
  * Extract summary from previous parts to provide context for subsequent parts
+ * @deprecated Use extractStateHandoff instead for RLM pattern
  */
 function extractPreviousSummary(result: MultiPartResult, upToPart: number): string {
   const summaries: string[] = [];
-  
+
   // Extract key findings from each completed part
   const partKeys = ['part1', 'part2', 'part3', 'part4', 'part5'] as const;
   const partDescriptions = [
@@ -513,19 +576,19 @@ function extractPreviousSummary(result: MultiPartResult, upToPart: number): stri
     'Core Design Prompts',
     'Advanced Design Prompts',
   ];
-  
+
   for (let i = 0; i < upToPart && i < partKeys.length; i++) {
     const partContent = result[partKeys[i]];
     if (partContent) {
       // Extract the summary section if it exists, otherwise use first 500 chars
       const summaryMatch = partContent.match(/## (?:Key Findings Summary|Summary|Roadmap Summary|Competitor Intelligence Summary)[\s\S]*?(?=\n## |\n\[✅|$)/i);
-      const summary = summaryMatch 
-        ? summaryMatch[0].substring(0, 600) 
+      const summary = summaryMatch
+        ? summaryMatch[0].substring(0, 600)
         : partContent.substring(0, 400) + '...';
       summaries.push(`**Part ${i + 1} (${partDescriptions[i]}):**\n${summary}`);
     }
   }
-  
+
   return summaries.join('\n\n');
 }
 
@@ -541,20 +604,20 @@ export async function generateAnalysis(
   callbacks?: AnalysisCallbacks
 ): Promise<SingleAnalysisResult | MultiPartResult | InsiderResult> {
   console.log(`[Perplexity] Starting ${tier} tier analysis`);
-  
+
   switch (tier) {
     case "standard":
       // Observer tier: Single-part quick validation
       return generateSingleAnalysis(problemStatement, "standard");
-    
+
     case "medium":
       // Insider tier: 2-part strategic blueprint
       return generateInsiderAnalysis(problemStatement, callbacks);
-    
+
     case "full":
       // Syndicate tier: 6-part comprehensive APEX analysis
       return generateMultiPartAnalysis(problemStatement, callbacks);
-    
+
     default:
       console.warn(`[Perplexity] Unknown tier: ${tier}, falling back to standard`);
       return generateSingleAnalysis(problemStatement, "standard");
