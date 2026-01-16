@@ -45,7 +45,7 @@ let circuitBreaker: CircuitBreakerState = {
 
 function isCircuitOpen(): boolean {
   if (!circuitBreaker.isOpen) return false;
-  
+
   // Check if we should try half-open
   const timeSinceLastFailure = Date.now() - circuitBreaker.lastFailure;
   if (timeSinceLastFailure > CIRCUIT_BREAKER_CONFIG.resetTimeoutMs) {
@@ -53,7 +53,7 @@ function isCircuitOpen(): boolean {
     console.log("[SafeTracker] Circuit breaker moving to half-open state");
     return false;
   }
-  
+
   return true;
 }
 
@@ -67,7 +67,7 @@ function recordCircuitSuccess(): void {
 function recordCircuitFailure(error: Error): void {
   circuitBreaker.failures++;
   circuitBreaker.lastFailure = Date.now();
-  
+
   if (circuitBreaker.failures >= CIRCUIT_BREAKER_CONFIG.failureThreshold) {
     circuitBreaker.isOpen = true;
     console.error(`[SafeTracker] Circuit breaker OPEN after ${circuitBreaker.failures} failures. Last error: ${error.message}`);
@@ -82,7 +82,7 @@ const processedOperations = new Map<string, number>();
 const IDEMPOTENCY_TTL_MS = 300000; // 5 minutes
 
 function getIdempotencyKey(sessionId: string, operation: string, partNum?: number): string {
-  return partNum !== undefined 
+  return partNum !== undefined
     ? `${sessionId}:${operation}:${partNum}`
     : `${sessionId}:${operation}`;
 }
@@ -90,19 +90,19 @@ function getIdempotencyKey(sessionId: string, operation: string, partNum?: numbe
 function isAlreadyProcessed(key: string): boolean {
   const timestamp = processedOperations.get(key);
   if (!timestamp) return false;
-  
+
   // Check if TTL expired
   if (Date.now() - timestamp > IDEMPOTENCY_TTL_MS) {
     processedOperations.delete(key);
     return false;
   }
-  
+
   return true;
 }
 
 function markAsProcessed(key: string): void {
   processedOperations.set(key, Date.now());
-  
+
   // Cleanup old entries periodically (every 100 operations)
   if (processedOperations.size > 100) {
     const now = Date.now();
@@ -132,13 +132,13 @@ async function safeExecute<T>(
     console.warn(`[SafeTracker] Circuit open, skipping ${operationName} for session ${sessionId}`);
     return null;
   }
-  
+
   // Check idempotency
   if (idempotencyKey && isAlreadyProcessed(idempotencyKey)) {
     console.debug(`[SafeTracker] Duplicate ${operationName} ignored for session ${sessionId}`);
     return null;
   }
-  
+
   try {
     const result = await fn();
     recordCircuitSuccess();
@@ -147,10 +147,10 @@ async function safeExecute<T>(
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error));
     recordCircuitFailure(err);
-    
+
     // Log but never throw - this is fire-and-forget
     console.error(`[SafeTracker] ${operationName} failed for session ${sessionId}:`, err.message);
-    
+
     // Don't mark as processed on failure - allow retry
     return null;
   }
@@ -200,11 +200,11 @@ export async function trackAnalysisStart(
 ): Promise<string | null> {
   const opts = { ...defaultOptions, ...options };
   const idempotencyKey = getIdempotencyKey(sessionId, "start");
-  
+
   if (opts.debug) {
     console.log(`[SafeTracker] trackAnalysisStart: session=${sessionId}, tier=${tier}`);
   }
-  
+
   const fn = async () => {
     const result = await createOperation({
       sessionId,
@@ -216,12 +216,12 @@ export async function trackAnalysisStart(
     }
     return result.operationId;
   };
-  
+
   if (opts.async) {
     fireAndForget("trackAnalysisStart", sessionId, fn, idempotencyKey);
     return null; // Fire-and-forget, no operationId returned
   }
-  
+
   return safeExecute("trackAnalysisStart", sessionId, fn, idempotencyKey);
 }
 
@@ -236,18 +236,18 @@ export function trackPartStart(
 ): void {
   const opts = { ...defaultOptions, ...options };
   const idempotencyKey = getIdempotencyKey(sessionId, "part_start", partNum);
-  
+
   if (opts.debug) {
     console.log(`[SafeTracker] trackPartStart: session=${sessionId}, part=${partNum}`);
   }
-  
+
   fireAndForget("trackPartStart", sessionId, async () => {
     const operation = await getOperationBySessionId(sessionId);
     if (!operation) {
       console.warn(`[SafeTracker] No operation found for session ${sessionId}, skipping part start tracking`);
       return;
     }
-    
+
     // Only transition if not already generating
     if (operation.state !== "generating") {
       await transitionState(operation.operationId, "generating", {
@@ -267,26 +267,28 @@ export function trackPartComplete(
   partNum: number,
   content: string,
   durationMs?: number,
+  handoffState?: string,
   options: SafeTrackerOptions = {}
 ): void {
   const opts = { ...defaultOptions, ...options };
   const idempotencyKey = getIdempotencyKey(sessionId, "part_complete", partNum);
-  
+
   if (opts.debug) {
     console.log(`[SafeTracker] trackPartComplete: session=${sessionId}, part=${partNum}, duration=${durationMs}ms`);
   }
-  
+
   fireAndForget("trackPartComplete", sessionId, async () => {
     const operation = await getOperationBySessionId(sessionId);
     if (!operation) {
       console.warn(`[SafeTracker] No operation found for session ${sessionId}, skipping part complete tracking`);
       return;
     }
-    
+
     await recordPartCompletion(operation.operationId, {
       partNumber: partNum,
       content,
       durationMs: durationMs ?? 0,
+      handoffState,
     });
   }, idempotencyKey);
 }
@@ -304,20 +306,20 @@ export function trackPartFailure(
 ): void {
   const opts = { ...defaultOptions, ...options };
   const idempotencyKey = getIdempotencyKey(sessionId, "part_failure", partNum);
-  
+
   const errorMessage = error instanceof Error ? error.message : error;
-  
+
   if (opts.debug) {
     console.log(`[SafeTracker] trackPartFailure: session=${sessionId}, part=${partNum}, error=${errorMessage}`);
   }
-  
+
   fireAndForget("trackPartFailure", sessionId, async () => {
     const operation = await getOperationBySessionId(sessionId);
     if (!operation) {
       console.warn(`[SafeTracker] No operation found for session ${sessionId}, skipping part failure tracking`);
       return;
     }
-    
+
     await recordPartFailure(operation.operationId, partNum, errorCode || "UNKNOWN_ERROR", errorMessage);
   }, idempotencyKey);
 }
@@ -333,18 +335,18 @@ export function trackAnalysisComplete(
 ): void {
   const opts = { ...defaultOptions, ...options };
   const idempotencyKey = getIdempotencyKey(sessionId, "complete");
-  
+
   if (opts.debug) {
     console.log(`[SafeTracker] trackAnalysisComplete: session=${sessionId}, duration=${durationMs}ms`);
   }
-  
+
   fireAndForget("trackAnalysisComplete", sessionId, async () => {
     const operation = await getOperationBySessionId(sessionId);
     if (!operation) {
       console.warn(`[SafeTracker] No operation found for session ${sessionId}, skipping completion tracking`);
       return;
     }
-    
+
     // Transition to completed
     await transitionState(operation.operationId, "completed", {
       actorType: "system",
@@ -365,20 +367,20 @@ export function trackAnalysisFailure(
 ): void {
   const opts = { ...defaultOptions, ...options };
   const idempotencyKey = getIdempotencyKey(sessionId, "failure");
-  
+
   const errorMessage = error instanceof Error ? error.message : error;
-  
+
   if (opts.debug) {
     console.log(`[SafeTracker] trackAnalysisFailure: session=${sessionId}, error=${errorMessage}, failedAtPart=${failedAtPart}`);
   }
-  
+
   fireAndForget("trackAnalysisFailure", sessionId, async () => {
     const operation = await getOperationBySessionId(sessionId);
     if (!operation) {
       console.warn(`[SafeTracker] No operation found for session ${sessionId}, skipping failure tracking`);
       return;
     }
-    
+
     // Transition to failed
     await transitionState(operation.operationId, "failed", {
       actorType: "system",
@@ -400,18 +402,18 @@ export function trackPartialSuccess(
 ): void {
   const opts = { ...defaultOptions, ...options };
   const idempotencyKey = getIdempotencyKey(sessionId, "partial_success");
-  
+
   if (opts.debug) {
     console.log(`[SafeTracker] trackPartialSuccess: session=${sessionId}, completed=${completedParts}/${totalParts}`);
   }
-  
+
   fireAndForget("trackPartialSuccess", sessionId, async () => {
     const operation = await getOperationBySessionId(sessionId);
     if (!operation) {
       console.warn(`[SafeTracker] No operation found for session ${sessionId}, skipping partial success tracking`);
       return;
     }
-    
+
     // Transition to completed (partial success is still a completion)
     await transitionState(operation.operationId, "completed", {
       actorType: "system",
@@ -435,11 +437,11 @@ export function trackQueuedForRetry(
 ): void {
   const opts = { ...defaultOptions, ...options };
   const idempotencyKey = getIdempotencyKey(sessionId, "queued_retry");
-  
+
   if (opts.debug) {
     console.log(`[SafeTracker] trackQueuedForRetry: session=${sessionId}, reason=${reason}`);
   }
-  
+
   fireAndForget("trackQueuedForRetry", sessionId, async () => {
     const operation = await getOperationBySessionId(sessionId);
     if (!operation) {
@@ -447,7 +449,7 @@ export function trackQueuedForRetry(
       console.debug(`[SafeTracker] No operation found for session ${sessionId}, skipping retry queue tracking`);
       return;
     }
-    
+
     // Record retry event without changing state
     // The retry queue processor will handle state transitions
   }, idempotencyKey);

@@ -1371,6 +1371,43 @@ export const appRouter = router({
           });
         }
 
+        // Get operation details to resume execution
+        const details = await getOperationDetails(input.operationId);
+
+        if (details && details.operation.sessionId) {
+          const { operation, partialResults } = details;
+
+          // Get original session config
+          const session = await getAnalysisSessionById(operation.sessionId);
+
+          if (session) {
+            console.log(`[Router] Resuming analysis for session ${session.sessionId} from part ${operation.completedParts + 1}`);
+
+            // Map partial results to ResumeOptions format
+            const previousParts = {
+              part1: partialResults.part1 || undefined,
+              part2: partialResults.part2 || undefined,
+              part3: partialResults.part3 || undefined,
+              part4: partialResults.part4 || undefined,
+              part5: partialResults.part5 || undefined,
+              part6: partialResults.part6 || undefined,
+            };
+
+            // Start background analysis with resume info
+            startAnalysisInBackground(
+              session.sessionId,
+              session.problemStatement,
+              session.tier as Tier,
+              session.email,
+              {
+                resumeFromPart: operation.completedParts + 1,
+                initialHandoffState: operation.handoffState || "",
+                previousParts
+              }
+            );
+          }
+        }
+
         return {
           success: true,
           message: `Operation resumed successfully`,
@@ -1626,17 +1663,41 @@ export const appRouter = router({
   // APEX analysis is now handled via payment.confirmAndStartAnalysis which uses the 6-part generateMultiPartAnalysis
 });
 
+// Resume configuration type
+interface ResumeConfig {
+  resumeFromPart: number;
+  initialHandoffState: string;
+  previousParts: {
+    part1?: string;
+    part2?: string;
+    part3?: string;
+    part4?: string;
+    part5?: string;
+    part6?: string;
+  };
+}
+
 // Background analysis function with comprehensive error handling
-async function startAnalysisInBackground(sessionId: string, problemStatement: string, tier: Tier, email?: string | null) {
+async function startAnalysisInBackground(
+  sessionId: string,
+  problemStatement: string,
+  tier: Tier,
+  email?: string | null,
+  resumeConfig?: ResumeConfig
+) {
   const startTime = Date.now();
   const tierConfig = TIER_ERROR_CONFIGS[tier];
   let partialResultsManager: PartialResultsManager | null = null;
 
-  // Log analysis start
-  logAnalysisStart(sessionId, tier, problemStatement);
-
-  // Track analysis start in Operations Center (fire-and-forget, never blocks)
-  trackAnalysisStart(sessionId, tier, "user");
+  // Log analysis start (or resume)
+  if (resumeConfig) {
+    console.log(`[Analysis] RESUMING ${tier} analysis for session ${sessionId} from part ${resumeConfig.resumeFromPart}`);
+    // We don't call trackAnalysisStart here because it's already an existing operation
+  } else {
+    logAnalysisStart(sessionId, tier, problemStatement);
+    // Track analysis start in Operations Center (fire-and-forget, never blocks)
+    trackAnalysisStart(sessionId, tier, "user");
+  }
 
   // Check circuit breaker state before starting
   const circuitState = perplexityCircuitBreaker.getState();
@@ -1678,7 +1739,7 @@ async function startAnalysisInBackground(sessionId: string, problemStatement: st
       partialResultsManager = createPartialResultsManager(sessionId, tier, totalParts);
 
       const result = await generateMultiPartAnalysis(problemStatement, {
-        onPartComplete: async (partNum, content) => {
+        onPartComplete: async (partNum, content, handoffState) => {
           console.log(`[Analysis] Part ${partNum} complete for session ${sessionId}`);
           logPartComplete(sessionId, partNum, totalParts);
 
@@ -1688,7 +1749,7 @@ async function startAnalysisInBackground(sessionId: string, problemStatement: st
           }
 
           // Track successful part completion (fire-and-forget)
-          trackPartComplete(sessionId, partNum, content, Date.now() - startTime);
+          trackPartComplete(sessionId, partNum, content, Date.now() - startTime, handoffState);
 
           // Track successful part
           partialResultsManager?.markPartComplete(partNum, content);
@@ -1771,7 +1832,12 @@ async function startAnalysisInBackground(sessionId: string, problemStatement: st
           // Full failure - add to retry queue
           await handleAnalysisFailure(sessionId, tier, problemStatement, email, error, startTime);
         },
-      });
+      },
+        {
+          startFromPart: resumeConfig?.resumeFromPart || 1,
+          initialAccumulatedState: resumeConfig?.initialHandoffState || "",
+          previousParts: resumeConfig?.previousParts || {}
+        });
     } else if (tier === "medium") {
       // Insider tier: 2-part strategic blueprint with error handling
       const totalParts = 2;
@@ -1780,7 +1846,7 @@ async function startAnalysisInBackground(sessionId: string, problemStatement: st
       console.log(`[Analysis] Starting Insider 2-part analysis for session ${sessionId}`);
 
       const result = await generateInsiderAnalysis(problemStatement, {
-        onPartComplete: async (partNum, content) => {
+        onPartComplete: async (partNum, content, handoffState) => {
           console.log(`[Analysis] Insider Part ${partNum} complete for session ${sessionId}`);
           logPartComplete(sessionId, partNum, totalParts);
 
@@ -1790,7 +1856,7 @@ async function startAnalysisInBackground(sessionId: string, problemStatement: st
           }
 
           // Track successful part completion (fire-and-forget)
-          trackPartComplete(sessionId, partNum, content, Date.now() - startTime);
+          trackPartComplete(sessionId, partNum, content, Date.now() - startTime, handoffState);
 
           partialResultsManager?.markPartComplete(partNum, content);
 
@@ -1867,7 +1933,12 @@ async function startAnalysisInBackground(sessionId: string, problemStatement: st
 
           await handleAnalysisFailure(sessionId, tier, problemStatement, email, error, startTime);
         },
-      });
+      },
+        {
+          startFromPart: resumeConfig?.resumeFromPart || 1,
+          initialAccumulatedState: resumeConfig?.initialHandoffState || "",
+          previousParts: resumeConfig?.previousParts || {}
+        });
     } else {
       // Observer tier: Single analysis with retry wrapper
       console.log(`[Analysis] Starting Observer single analysis for session ${sessionId}`);

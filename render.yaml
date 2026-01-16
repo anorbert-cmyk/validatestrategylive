@@ -2,29 +2,76 @@ services:
   # Main Web Service (Node.js/Express)
   - type: web
     name: validate-strategy-web
-    env: node
+    runtime: node
     plan: starter
     buildCommand: npm install && npm run build
     startCommand: npm start
+    healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
         value: production
+      # Database
       - key: DATABASE_URL
-        sync: false # Must be set in Dashboard
-      - key: PERPLEXITY_API_KEY
+        sync: false # Set in Render Dashboard
+      # Auth
+      - key: JWT_SECRET
         sync: false
+      - key: SESSION_SECRET
+        sync: false
+      # App URL
+      - key: VITE_APP_URL
+        sync: false
+      # Payments: Stripe
       - key: STRIPE_SECRET_KEY
         sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      # Payments: NOWPayments (Crypto)
       - key: NOWPAYMENTS_API_KEY
         sync: false
+      - key: NOWPAYMENTS_IPN_SECRET
+        sync: false
+      # Payments: PayPal (Optional)
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: PAYPAL_WEBHOOK_ID
+        sync: false
+      - key: PAYPAL_MODE
+        value: sandbox
+      # Email: Resend
       - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM_EMAIL
+        sync: false
+      # AI: Perplexity
+      - key: PERPLEXITY_API_KEY
+        sync: false
+      # Storage: Cloudflare R2
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_PUBLIC_URL
+        sync: false
+      - key: R2_BUCKET_NAME
+        sync: false
+      # Security
+      - key: ADMIN_WALLET_ADDRESS
+        sync: false
+      - key: RECAPTCHA_SECRET_KEY
+        sync: false
+      - key: VITE_RECAPTCHA_SITE_KEY
         sync: false
     autoDeploy: false
 
   # Background Worker (Retry Queue)
   - type: worker
     name: validate-strategy-worker
-    env: node
+    runtime: node
     plan: starter
     buildCommand: npm install && npm run build
     startCommand: npm run start:worker
@@ -33,12 +80,20 @@ services:
         value: production
       - key: DATABASE_URL
         sync: false
+      - key: PERPLEXITY_API_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM_EMAIL
+        sync: false
+      - key: VITE_APP_URL
+        sync: false
     autoDeploy: false
 
   # Cron Job (Email Sequence)
   - type: cron
     name: validate-strategy-email-cron
-    env: node
+    runtime: node
     plan: starter
     schedule: "0 9 * * *" # Runs every day at 9:00 AM UTC
     buildCommand: npm install && npm run build
@@ -48,3 +103,10 @@ services:
         value: production
       - key: DATABASE_URL
         sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM_EMAIL
+        sync: false
+      - key: VITE_APP_URL
+        sync: false
+    autoDeploy: false

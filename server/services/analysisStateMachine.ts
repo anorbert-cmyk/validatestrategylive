@@ -13,8 +13,8 @@
  */
 
 import { getDb } from "../db";
-import { 
-  analysisOperations, 
+import {
+  analysisOperations,
   analysisOperationEvents,
   adminAuditLog,
   analysisSessions,
@@ -28,7 +28,7 @@ import { v4 as uuidv4 } from "uuid";
 // TYPES & INTERFACES
 // ============================================================================
 
-export type OperationState = 
+export type OperationState =
   | "initialized"
   | "generating"
   | "part_completed"
@@ -73,6 +73,7 @@ export interface PartCompletionData {
   content: string;
   durationMs: number;
   tokenCount?: number;
+  handoffState?: string; // Stored JSON state for resume capability
 }
 
 export interface OperationDetails {
@@ -330,6 +331,7 @@ export async function recordPartCompletion(
         lastPartCompletedAt: new Date(),
         state: isLastPart ? "completed" : "part_completed",
         completedAt: isLastPart ? new Date() : undefined,
+        handoffState: data.handoffState || operation.handoffState, // Update or keep existing
       })
       .where(eq(analysisOperations.operationId, operationId));
 

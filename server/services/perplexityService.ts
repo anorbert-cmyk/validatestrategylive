@@ -190,9 +190,22 @@ Maximum 3,000 tokens. Be thorough but focused.
 
 export interface AnalysisCallbacks {
   onChunk?: (partNumber: number, chunk: string) => void;
-  onPartComplete?: (partNumber: number, content: string) => void;
+  onPartComplete?: (partNumber: number, content: string, handoffState?: string) => void;
   onComplete?: (result: MultiPartResult) => void;
   onError?: (error: Error) => void;
+}
+
+export interface ResumeOptions {
+  startFromPart: number;
+  initialAccumulatedState: string;
+  previousParts: {
+    part1?: string;
+    part2?: string;
+    part3?: string;
+    part4?: string;
+    part5?: string;
+    part6?: string;
+  };
 }
 
 export interface SingleAnalysisResult {
@@ -277,7 +290,8 @@ export async function generateSingleAnalysis(
  */
 export async function generateInsiderAnalysis(
   problemStatement: string,
-  callbacks?: AnalysisCallbacks
+  callbacks?: AnalysisCallbacks,
+  resumeOptions?: ResumeOptions
 ): Promise<InsiderResult> {
   // Sanitize input
   const { sanitized, flags } = sanitizeInput(problemStatement);
@@ -287,8 +301,8 @@ export async function generateInsiderAnalysis(
   }
 
   const result: InsiderResult = {
-    part1: "",
-    part2: "",
+    part1: resumeOptions?.previousParts.part1 || "",
+    part2: resumeOptions?.previousParts.part2 || "",
     fullMarkdown: "",
     generatedAt: 0,
   };
@@ -299,11 +313,14 @@ export async function generateInsiderAnalysis(
   ];
 
   // STATE_HANDOFF from Part 1 (for Part 2 context)
-  let stateHandoffPart1 = "";
+  // If resuming, try to use initialAccumulatedState as loop starting point
+  let stateHandoffPart1 = resumeOptions?.initialAccumulatedState || "";
+
+  const startPart = resumeOptions?.startFromPart || 1;
 
   try {
     // Process each of the 2 parts sequentially
-    for (let partNum = 1; partNum <= 2; partNum++) {
+    for (let partNum = startPart; partNum <= 2; partNum++) {
       console.log(`[Perplexity] Starting Insider Part ${partNum}/2 generation`);
 
       // RLM Pattern: Build fresh message array for this part
@@ -343,7 +360,7 @@ export async function generateInsiderAnalysis(
       }
 
       // Notify part completion
-      callbacks?.onPartComplete?.(partNum, partContent);
+      callbacks?.onPartComplete?.(partNum, partContent, stateHandoffPart1);
 
       console.log(`[Perplexity] Completed Insider Part ${partNum}/2, length: ${partContent.length}`);
     }
@@ -402,7 +419,8 @@ export async function generateInsiderAnalysis(
  */
 export async function generateMultiPartAnalysis(
   problemStatement: string,
-  callbacks?: AnalysisCallbacks
+  callbacks?: AnalysisCallbacks,
+  resumeOptions?: ResumeOptions
 ): Promise<MultiPartResult> {
   // Sanitize input
   const { sanitized, flags } = sanitizeInput(problemStatement);
@@ -411,13 +429,14 @@ export async function generateMultiPartAnalysis(
     console.warn('[Perplexity] Potential prompt injection attempt detected:', flags.length, 'patterns');
   }
 
+  // Initialize result with previous parts if resuming
   const result: MultiPartResult = {
-    part1: "",
-    part2: "",
-    part3: "",
-    part4: "",
-    part5: "",
-    part6: "",
+    part1: resumeOptions?.previousParts.part1 || "",
+    part2: resumeOptions?.previousParts.part2 || "",
+    part3: resumeOptions?.previousParts.part3 || "",
+    part4: resumeOptions?.previousParts.part4 || "",
+    part5: resumeOptions?.previousParts.part5 || "",
+    part6: resumeOptions?.previousParts.part6 || "",
     fullMarkdown: "",
     generatedAt: 0,
   };
@@ -427,8 +446,8 @@ export async function generateMultiPartAnalysis(
     { role: "system", content: SYNDICATE_SYSTEM_PROMPT },
   ];
 
-  // Accumulated STATE_HANDOFF blocks (not full responses) - the RLM "state" object
-  let accumulatedState = "";
+  // Accumulated STATE_HANDOFF blocks
+  let accumulatedState = resumeOptions?.initialAccumulatedState || "";
 
   // Part titles for logging and markdown assembly
   const partTitles: Record<number, string> = {
@@ -440,9 +459,11 @@ export async function generateMultiPartAnalysis(
     6: "Risk, Metrics & Strategic Rationale",
   };
 
+  const startPart = resumeOptions?.startFromPart || 1;
+
   try {
-    // Process each of the 6 parts sequentially
-    for (let partNum = 1; partNum <= 6; partNum++) {
+    // Process each part sequentially, starting from startPart
+    for (let partNum = startPart; partNum <= 6; partNum++) {
       console.log(`[Perplexity] Starting Syndicate Part ${partNum}/6: ${partTitles[partNum]}`);
 
       // RLM Pattern: Build fresh message array for this part (not accumulating full history)
@@ -484,7 +505,7 @@ export async function generateMultiPartAnalysis(
       }
 
       // Notify part completion
-      callbacks?.onPartComplete?.(partNum, partContent);
+      callbacks?.onPartComplete?.(partNum, partContent, accumulatedState);
 
       console.log(`[Perplexity] Completed Syndicate Part ${partNum}/6, length: ${partContent.length}`);
     }
@@ -601,7 +622,8 @@ function extractPreviousSummary(result: MultiPartResult, upToPart: number): stri
 export async function generateAnalysis(
   problemStatement: string,
   tier: Tier,
-  callbacks?: AnalysisCallbacks
+  callbacks?: AnalysisCallbacks,
+  resumeOptions?: ResumeOptions
 ): Promise<SingleAnalysisResult | MultiPartResult | InsiderResult> {
   console.log(`[Perplexity] Starting ${tier} tier analysis`);
 
@@ -616,7 +638,7 @@ export async function generateAnalysis(
 
     case "full":
       // Syndicate tier: 6-part comprehensive APEX analysis
-      return generateMultiPartAnalysis(problemStatement, callbacks);
+      return generateMultiPartAnalysis(problemStatement, callbacks, resumeOptions);
 
     default:
       console.warn(`[Perplexity] Unknown tier: ${tier}, falling back to standard`);

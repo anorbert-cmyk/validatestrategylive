@@ -1,0 +1,1 @@
+ALTER TABLE `analysis_operations` ADD `handoffState` text;

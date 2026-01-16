@@ -428,6 +428,9 @@ export const analysisOperations = mysqlTable("analysis_operations", {
     failedPart: int("failedPart"), // Which part failed
     retryCount: int("retryCount").default(0).notNull(),
 
+    // RLM State Persistence
+    handoffState: text("handoffState"), // JSON string of accumulated state for resume capability
+
     // Metadata
     triggeredBy: mysqlEnum("triggeredBy", ["user", "system", "admin", "retry_queue"]).default("user").notNull(),
     adminNotes: text("adminNotes"),
