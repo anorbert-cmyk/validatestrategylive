@@ -1,1 +1,0 @@
-ALTER TABLE `purchases` MODIFY COLUMN `paymentMethod` enum('stripe','coinbase','paypal','lemonsqueezy') NOT NULL;
