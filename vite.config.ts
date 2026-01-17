@@ -22,9 +22,29 @@ export default defineConfig({
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
     sourcemap: true, // Enable source maps for debugging
-    // Removed manualChunks - was causing React duplication with Radix UI
-    // Let Rollup handle chunking automatically with dedupe
-    chunkSizeWarningLimit: 600, // 573kB raw → 168kB gzip is acceptable
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          // Don't split React - let dedupe handle it
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+            return undefined; // Let it go to main bundle with dedupe
+          }
+          // Split Radix UI into its own chunk (large, stable, cacheable)
+          if (id.includes('@radix-ui')) {
+            return 'vendor-radix';
+          }
+          // Split data fetching libraries
+          if (id.includes('@tanstack') || id.includes('@trpc')) {
+            return 'vendor-data';
+          }
+          // Split utility libraries
+          if (id.includes('lucide-react')) {
+            return 'vendor-icons';
+          }
+        },
+      },
+    },
   },
   server: {
     host: true,
