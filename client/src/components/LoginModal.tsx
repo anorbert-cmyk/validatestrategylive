@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
     Dialog,
     DialogContent,
@@ -86,7 +87,9 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 ) : (
                     <form onSubmit={handleSubmit} className="space-y-4 pt-2">
                         <div className="space-y-2">
+                            <Label htmlFor="email" className="font-mono text-xs uppercase text-muted-foreground">Email</Label>
                             <Input
+                                id="email"
                                 type="email"
                                 placeholder="founder@startup.com"
                                 value={email}
