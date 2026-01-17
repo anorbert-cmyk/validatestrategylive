@@ -1,5 +1,10 @@
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+// ESM-compatible __dirname replacement
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Define the structure of our prompt repository
 interface PromptCache {
@@ -13,9 +18,12 @@ class PromptLoader {
 
     constructor() {
         // Determine prompts directory relative to this service file
-        // Assuming this file is in server/services/
-        // And prompts are in project_root/prompts/
-        this.promptsDir = path.resolve(__dirname, '../../prompts');
+        // In production (bundled): dist/index.js -> prompts/
+        // In development: server/services/ -> prompts/
+        const isProduction = process.env.NODE_ENV === 'production';
+        this.promptsDir = isProduction
+            ? path.resolve(process.cwd(), 'prompts')
+            : path.resolve(__dirname, '../../prompts');
     }
 
     /**
