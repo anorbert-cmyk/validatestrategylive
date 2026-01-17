@@ -14,6 +14,8 @@ interface ResizableTableHeadProps extends React.ThHTMLAttributes<HTMLTableCellEl
   minWidth?: number;
   maxWidth?: number;
   resizable?: boolean;
+  width?: number;
+  onResize?: (width: number) => void;
 }
 
 interface ResizableTableRowProps extends React.HTMLAttributes<HTMLTableRowElement> {
@@ -57,8 +59,9 @@ const ResizableTableHeader = React.forwardRef<HTMLTableSectionElement, Resizable
 ResizableTableHeader.displayName = "ResizableTableHeader";
 
 const ResizableTableHead = React.forwardRef<HTMLTableCellElement, ResizableTableHeadProps>(
-  ({ className, children, minWidth = 80, maxWidth = 500, resizable = true, style, ...props }, ref) => {
-    const [width, setWidth] = React.useState<number | undefined>(undefined);
+  ({ className, children, minWidth = 80, maxWidth = 500, resizable = true, onResize, width: controlledWidth, style, ...props }, ref) => {
+    const [widthState, setWidthState] = React.useState<number | undefined>(undefined);
+    const width = controlledWidth !== undefined ? controlledWidth : widthState;
     const [isResizing, setIsResizing] = React.useState(false);
     const startXRef = React.useRef<number>(0);
     const startWidthRef = React.useRef<number>(0);
@@ -78,7 +81,8 @@ const ResizableTableHead = React.forwardRef<HTMLTableCellElement, ResizableTable
       const handleMouseMove = (e: MouseEvent) => {
         const diff = e.clientX - startXRef.current;
         const newWidth = Math.max(minWidth, Math.min(maxWidth, startWidthRef.current + diff));
-        setWidth(newWidth);
+        setWidthState(newWidth);
+        onResize?.(newWidth);
       };
 
       const handleMouseUp = () => {
@@ -106,7 +110,7 @@ const ResizableTableHead = React.forwardRef<HTMLTableCellElement, ResizableTable
           isResizing && "cursor-col-resize",
           className
         )}
-        style={{ ...style, width: width ? `${width}px` : style?.width }}
+        style={{ ...style, width: (controlledWidth || width || style?.width) ? `${controlledWidth || width || style?.width}px` : undefined }}
         {...props}
       >
         <div className="truncate pr-2">{children}</div>

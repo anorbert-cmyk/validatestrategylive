@@ -1,43 +1,101 @@
-name: CI
+name: Agentic CI/CD Pipeline
 
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  # Allow manual trigger
+  workflow_dispatch:
 
 jobs:
-  build:
+  # 🧪 Agent: Quality
+  # Responsible for: Testing, Type Checking, Linting
+  quality-gate:
+    name: 🧪 Quality Agent
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [20.x]
-
     steps:
     - uses: actions/checkout@v4
-
-    - name: Use Node.js ${{ matrix.node-version }}
+    
+    - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: ${{ matrix.node-version }}
+        node-version: '20.x'
         cache: 'npm'
-
-    - name: Install dependencies
+        
+    - name: Install Dependencies
       run: npm ci
-
+      
     - name: Check Types (TSC)
       run: npm run check
-
-    # TODO: Enable linting globally when ready (currently skipped to allow build)
-    # - name: Lint
-    #   run: npm run lint
-
-    - name: Run Server Tests
+      
+    - name: Server Tests
       run: npm test
-
-    - name: Run Client Tests
+      
+    - name: Client Tests
       run: npm run test:client
 
-    - name: Build
+  # 🛡️ Agent: Security
+  # Responsible for: Vulnerability Scanning
+  security-gate:
+    name: 🛡️ Security Agent
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        
+    - name: Audit Dependencies
+      # We use --audit-level=high to avoid failing on moderate dev-dependency issues
+      # If high/critical issues are found, this gate closes.
+      run: npm audit --audit-level=high
+
+  # 🏗️ Agent: Build
+  # Responsible for: Verifying Build Integrity & Size
+  build-gate:
+    name: 🏗️ Build Agent
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        
+    - name: Install Dependencies
+      run: npm ci
+      
+    - name: Build Project
       run: npm run build
+
+  # 🚀 Agent: Operations (Deploy)
+  # Responsible for: Safe Deployment to Production
+  deploy:
+    name: 🚀 Deploy Agent
+    needs: [quality-gate, security-gate, build-gate]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render Deploy
+        if: env.RENDER_DEPLOY_HOOK_URL != ''
+        run: |
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+
+      - name: Notify Missing Hook
+        if: env.RENDER_DEPLOY_HOOK_URL == ''
+        run: |
+          echo "⚠️ Deployment skipped: RENDER_DEPLOY_HOOK_URL secret not found."
+          echo "To enable Agentic Deployment:"
+          echo "1. Go to Render Dashboard -> Settings -> Deploy Hook"
+          echo "2. Add the URL to GitHub Secrets as RENDER_DEPLOY_HOOK_URL"
+          echo "3. Turn OFF 'Auto-Deploy' in Render to let this Agent take control."
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
