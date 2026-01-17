@@ -1,18 +1,19 @@
-name: CI
+name: CI/CD Pipeline
 
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
-  build-and-test:
+  # 🧪 Quality Gate - Tests & Type Checking
+  quality:
+    name: 🧪 Quality
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -29,11 +30,71 @@ jobs:
       - name: TypeScript check
         run: pnpm check
 
-      - name: Build
-        run: pnpm build
-
-      - name: Run server tests
+      - name: Server tests
         run: pnpm test
 
-      - name: Run client tests
+      - name: Client tests
         run: pnpm test:client
+
+  # 🛡️ Security Gate - Vulnerability Scanning
+  security:
+    name: 🛡️ Security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Audit dependencies
+        run: pnpm audit --audit-level=high
+        continue-on-error: true # Don't block on moderate issues
+
+  # 🏗️ Build Gate - Verify Build Integrity
+  build:
+    name: 🏗️ Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build project
+        run: pnpm build
+
+  # 🚀 Deploy - Only after all gates pass
+  deploy:
+    name: 🚀 Deploy
+    needs: [quality, security, build]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render Deploy
+        if: ${{ secrets.RENDER_DEPLOY_HOOK_URL != '' }}
+        run: curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+
+      - name: Deploy Status
+        run: |
+          if [ -z "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" ]; then
+            echo "⚠️ RENDER_DEPLOY_HOOK_URL not configured - Render auto-deploys on push"
+          else
+            echo "✅ Deploy webhook triggered"
+          fi
