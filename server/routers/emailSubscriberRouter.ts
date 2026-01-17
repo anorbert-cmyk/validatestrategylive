@@ -9,6 +9,8 @@
  */
 
 import { publicProcedure, protectedProcedure, router } from "../_core/trpc";
+import { config } from "../_core/config";
+import { logger } from "../_core/logger";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { saveEmailSubscriber, getAllEmailSubscribers, getEmailSubscriberCount } from "../db";
@@ -28,14 +30,14 @@ export const emailSubscriberRouter = router({
                     const { verifyRecaptcha } = await import("../services/recaptchaService");
                     const recaptchaResult = await verifyRecaptcha(input.recaptchaToken, "email_subscribe", 0.3);
                     if (recaptchaResult.success) {
-                        console.log(`[EmailSubscriber] reCAPTCHA passed for ${input.email}: score=${recaptchaResult.score}`);
+                        logger.info(`[EmailSubscriber] reCAPTCHA passed for ${input.email}: score=${recaptchaResult.score}`);
                     } else {
                         // Log but don't block - honeypot and disposable email checks are primary protection
-                        console.warn(`[EmailSubscriber] reCAPTCHA soft-fail for ${input.email}: ${recaptchaResult.error}`);
+                        logger.warn(`[EmailSubscriber] reCAPTCHA soft-fail for ${input.email}: ${recaptchaResult.error}`);
                     }
                 } catch (recaptchaError) {
                     // Never block on reCAPTCHA errors - it's supplementary protection
-                    console.warn(`[EmailSubscriber] reCAPTCHA error for ${input.email}:`, recaptchaError);
+                    logger.warn(`[EmailSubscriber] reCAPTCHA error for ${input.email}:`, recaptchaError);
                 }
             }
 
@@ -85,7 +87,7 @@ export const emailSubscriberRouter = router({
             }
 
             // Send verification email
-            const appUrl = process.env.VITE_APP_URL || 'https://validatestrategy.com';
+            const appUrl = config.VITE_APP_URL;
             const verificationUrl = `${appUrl}/verify-email?token=${verificationToken}`;
 
             try {
@@ -93,9 +95,9 @@ export const emailSubscriberRouter = router({
                     to: input.email,
                     verificationUrl,
                 });
-                console.log(`[EmailSubscriber] Verification email sent to ${input.email}`);
+                logger.info(`[EmailSubscriber] Verification email sent to ${input.email}`);
             } catch (error) {
-                console.error(`[EmailSubscriber] Failed to send verification email to ${input.email}:`, error);
+                logger.error(`[EmailSubscriber] Failed to send verification email to ${input.email}:`, error);
             }
 
             return {
@@ -131,10 +133,10 @@ export const emailSubscriberRouter = router({
                     const subscriber = await getEmailSubscriberByEmail(result.email);
                     if (subscriber) {
                         await sendWelcomeEmail(subscriber.id, result.email);
-                        console.log(`[EmailSubscriber] Welcome email sent to ${result.email}`);
+                        logger.info(`[EmailSubscriber] Welcome email sent to ${result.email}`);
                     }
                 } catch (error) {
-                    console.error(`[EmailSubscriber] Failed to send welcome email:`, error);
+                    logger.error(`[EmailSubscriber] Failed to send welcome email:`, error);
                 }
             }
 

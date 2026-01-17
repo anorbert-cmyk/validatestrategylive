@@ -12,15 +12,17 @@ import {
   processedWebhooks, InsertProcessedWebhook, ProcessedWebhook,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
+import { logger } from './_core/logger';
+import { config } from './_core/config';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
 export async function getDb() {
-  if (!_db && process.env.DATABASE_URL) {
+  if (!_db && config.DATABASE_URL) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      _db = drizzle(config.DATABASE_URL);
     } catch (error) {
-      console.warn("[Database] Failed to connect:", error);
+      logger.warn("[Database] Failed to connect:", error);
       _db = null;
     }
   }
@@ -36,7 +38,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
 
   const db = await getDb();
   if (!db) {
-    console.warn("[Database] Cannot upsert user: database not available");
+    logger.warn("[Database] Cannot upsert user: database not available");
     return;
   }
 
@@ -83,7 +85,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       set: updateSet,
     });
   } catch (error) {
-    console.error("[Database] Failed to upsert user:", error);
+    logger.error("[Database] Failed to upsert user:", error);
     throw error;
   }
 }
@@ -91,7 +93,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
 export async function getUserByOpenId(openId: string) {
   const db = await getDb();
   if (!db) {
-    console.warn("[Database] Cannot get user: database not available");
+    logger.warn("[Database] Cannot get user: database not available");
     return undefined;
   }
 
@@ -482,7 +484,7 @@ export async function tryMarkWebhookProcessed(
   } catch (error: any) {
     // If unique constraint violation, webhook was already processed
     if (error.code === "ER_DUP_ENTRY" || error.message?.includes("Duplicate entry")) {
-      console.log(`[Webhook] Duplicate webhook ID detected (idempotency): ${webhookId}`);
+      logger.info(`[Webhook] Duplicate webhook ID detected (idempotency): ${webhookId}`);
       return false;
     }
     // Re-throw other errors
@@ -513,7 +515,7 @@ export async function saveEmailSubscriber(
 ): Promise<{ success: boolean; isNew: boolean; subscriberId?: number; isVerified?: boolean }> {
   const db = await getDb();
   if (!db) {
-    console.warn("[Database] Cannot save email subscriber: database not available");
+    logger.warn("[Database] Cannot save email subscriber: database not available");
     return { success: false, isNew: false };
   }
 
@@ -551,7 +553,7 @@ export async function saveEmailSubscriber(
 
     return { success: true, isNew: true, subscriberId, isVerified: false };
   } catch (error) {
-    console.error("[Database] Error saving email subscriber:", error);
+    logger.error("[Database] Error saving email subscriber:", error);
     return { success: false, isNew: false };
   }
 }
@@ -559,7 +561,7 @@ export async function saveEmailSubscriber(
 export async function verifyEmailSubscriber(token: string): Promise<{ success: boolean; email?: string; error?: string }> {
   const db = await getDb();
   if (!db) {
-    console.warn("[Database] Cannot verify email subscriber: database not available");
+    logger.warn("[Database] Cannot verify email subscriber: database not available");
     return { success: false, error: "Database not available" };
   }
 
@@ -576,7 +578,7 @@ export async function verifyEmailSubscriber(token: string): Promise<{ success: b
     // SECURITY: Check if token has expired (24h window)
     const expiresAt = subscriber[0].verificationTokenExpiresAt;
     if (expiresAt && new Date() > expiresAt) {
-      console.warn(`[Security] Expired verification token used for: ${subscriber[0].email}`);
+      logger.warn(`[Security] Expired verification token used for: ${subscriber[0].email}`);
       // Clear the expired token
       await db.update(emailSubscribers)
         .set({ verificationToken: null, verificationTokenExpiresAt: null })
@@ -596,7 +598,7 @@ export async function verifyEmailSubscriber(token: string): Promise<{ success: b
 
     return { success: true, email: subscriber[0].email };
   } catch (error) {
-    console.error("[Database] Error verifying email subscriber:", error);
+    logger.error("[Database] Error verifying email subscriber:", error);
     return { success: false, error: "Verification failed" };
   }
 }
@@ -1322,7 +1324,7 @@ export async function getDemoAnalysisResult(): Promise<AnalysisResult | undefine
     // Ultimate fallback: return hardcoded demo content
     return DEMO_ANALYSIS_FALLBACK;
   } catch (error) {
-    console.error('getDemoAnalysisResult error, returning fallback:', error);
+    logger.error('getDemoAnalysisResult error, returning fallback:', error);
     // On any database error, return the hardcoded fallback
     return DEMO_ANALYSIS_FALLBACK;
   }

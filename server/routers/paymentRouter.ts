@@ -9,6 +9,8 @@
  */
 
 import { publicProcedure, router } from "../_core/trpc";
+import { config } from "../_core/config";
+import { logger } from "../_core/logger";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { getTierConfig, getTierPrice } from "../../shared/pricing";
@@ -42,7 +44,7 @@ export const paymentRouter = router({
                 throw new TRPCError({ code: "PRECONDITION_FAILED", message: "NOWPayments is not configured" });
             }
 
-            const appUrl = process.env.VITE_APP_URL || 'http://localhost:3000';
+            const appUrl = config.VITE_APP_URL;
             const tierConfig = getTierConfig(input.tier);
 
             const invoice = await createInvoice({
@@ -127,7 +129,7 @@ export const paymentRouter = router({
             // SECURITY: Idempotency check - prevent double-capture on network retry/double-click
             const existingPurchase = await getPurchaseBySessionId(input.sessionId);
             if (existingPurchase?.paymentStatus === "completed") {
-                console.log(`[PayPal] Idempotency: session ${input.sessionId} already completed`);
+                logger.info(`[PayPal] Idempotency: session ${input.sessionId} already completed`);
                 return {
                     success: true,
                     captureId: "already_captured",
@@ -178,7 +180,7 @@ export const paymentRouter = router({
 
             // SECURITY: Prevent duplicate analysis starts (race condition/double-submit protection)
             if (session.status !== "pending_payment") {
-                console.log(`[Analysis] Deduplication: session ${input.sessionId} already has status "${session.status}"`);
+                logger.info(`[Analysis] Deduplication: session ${input.sessionId} already has status "${session.status}"`);
                 return { status: session.status as string };
             }
 

@@ -11,8 +11,8 @@
     "start:cron": "NODE_ENV=production node dist/scripts/cron-email-sequence.js",
     "check": "tsc --noEmit",
     "format": "prettier --write .",
-    "test": "vitest run",
-    "test:client": "vitest -c client/vitest.config.ts run",
+    "test": "npx vitest run",
+    "test:client": "npx vitest -c client/vitest.config.ts run",
     "db:push": "drizzle-kit generate && drizzle-kit migrate"
   },
   "dependencies": {
