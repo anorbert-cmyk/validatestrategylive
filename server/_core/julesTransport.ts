@@ -1,32 +1,31 @@
-import TransportStream from "winston-transport";
+import Transport from "winston-transport";
+import type { LogEntry } from "winston";
 import { logWatcherService } from "../services/logWatcherService";
 
-interface JulesTransportOptions extends TransportStream.TransportStreamOptions {
-    // Custom options if needed
-}
-
-export class JulesTransport extends TransportStream {
-    constructor(opts?: JulesTransportOptions) {
+/**
+ * Custom Winston Transport for Jules AI Sentinel.
+ * Intercepts ERROR level logs and queues them for AI analysis.
+ */
+export class JulesTransport extends Transport {
+    constructor(opts?: Transport.TransportStreamOptions) {
         super(opts);
     }
 
-    log(info: any, callback: () => void) {
+    log(info: LogEntry, callback: () => void): void {
+        // Emit 'logged' event asynchronously (Winston convention)
         setImmediate(() => {
             this.emit("logged", info);
         });
 
+        // Only process error-level logs
         if (info.level === "error") {
-            // Extract message and metadata
-            // Info object usually has: level, message, timestamp, stack, [Symbol(splat)]
-            const message = info.message;
-            const stack = info.stack;
+            const message = typeof info.message === "string" ? info.message : String(info.message);
+            const stack = (info as Record<string, unknown>).stack as string | undefined;
 
             // Combine message and stack for context
             const fullContext = stack ? `${message}\n${stack}` : message;
 
             // Send to watcher (Fire and forget, non-blocking)
-            // We pass the RAW message/stack to the service, it handles hashing
-            // Use 'fullContext' as the message content for analysis
             logWatcherService.processError(fullContext, info);
         }
 
