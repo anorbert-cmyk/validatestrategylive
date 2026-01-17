@@ -3,15 +3,9 @@ import { emailSubscribers, emailSequenceStatus } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { ENV } from "./_core/env";
 import { getTrackingPixelHtml } from "./emailTracking";
+import { sendEmail, EmailTemplate } from "./services/emailService";
 
-// Resend API configuration
-const RESEND_API_URL = "https://api.resend.com/emails";
-
-interface EmailTemplate {
-  subject: string;
-  html: string;
-  text: string;
-}
+// Resend API configuration removed (moved to emailService)
 
 // Base URL for links in emails
 const getBaseUrl = () => {
@@ -36,7 +30,7 @@ function getEmail1Template(email: string, subscriberId: number = 0): EmailTempla
   const capitalizedName = firstName.charAt(0).toUpperCase() + firstName.slice(1);
   const trackingId = generateEmailTrackingId(subscriberId, 1);
   const trackingPixel = getTrackingPixelHtml(trackingId, baseUrl);
-  
+
   return {
     subject: "Your strategic analysis toolkit is ready ⚡",
     html: `
@@ -174,7 +168,7 @@ function getEmail2Template(email: string, subscriberId: number = 0): EmailTempla
   const capitalizedName = firstName.charAt(0).toUpperCase() + firstName.slice(1);
   const trackingId = generateEmailTrackingId(subscriberId, 2);
   const trackingPixel = getTrackingPixelHtml(trackingId, baseUrl);
-  
+
   return {
     subject: "How a founder validated their idea in 48 hours",
     html: `
@@ -345,7 +339,7 @@ function getEmail3Template(email: string, subscriberId: number = 0): EmailTempla
   const capitalizedName = firstName.charAt(0).toUpperCase() + firstName.slice(1);
   const trackingId = generateEmailTrackingId(subscriberId, 3);
   const trackingPixel = getTrackingPixelHtml(trackingId, baseUrl);
-  
+
   return {
     subject: "The #1 reason startup ideas fail (and how to avoid it)",
     html: `
@@ -537,10 +531,10 @@ function getEmail4Template(email: string, subscriberId: number = 0): EmailTempla
   const capitalizedName = firstName.charAt(0).toUpperCase() + firstName.slice(1);
   const trackingId = generateEmailTrackingId(subscriberId, 4);
   const trackingPixel = getTrackingPixelHtml(trackingId, baseUrl);
-  
+
   // Priority link with tracking
   const priorityLink = `${baseUrl}/#pricing?priority=PRIORITY`;
-  
+
   return {
     subject: "Your exclusive priority access expires soon ⏰",
     html: `
@@ -763,46 +757,6 @@ Unsubscribe: ${baseUrl}/unsubscribe?email=${encodeURIComponent(email)}
 }
 
 /**
- * Send email via Resend API
- */
-async function sendEmail(to: string, template: EmailTemplate): Promise<boolean> {
-  const apiKey = process.env.RESEND_API_KEY;
-  const fromEmail = process.env.RESEND_FROM_EMAIL || "hello@validatestrategy.com";
-  
-  if (!apiKey) {
-    console.error("[EmailNurturing] RESEND_API_KEY not configured");
-    return false;
-  }
-  
-  try {
-    const response = await fetch(RESEND_API_URL, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: `ValidateStrategy <${fromEmail}>`,
-        to: [to],
-        subject: template.subject,
-        html: template.html,
-        text: template.text,
-      }),
-    });
-    
-    if (!response.ok) {
-      const error = await response.text();
-      console.error(`[EmailNurturing] Failed to send email to ${to}:`, error);
-      return false;
-    }
-    
-    console.log(`[EmailNurturing] Successfully sent email to ${to}: ${template.subject}`);
-    return true;
-  } catch (error) {
-    console.error(`[EmailNurturing] Error sending email to ${to}:`, error);
-    return false;
-  }
-}
 
 /**
  * Send Email 1 (Welcome) immediately after subscription
@@ -810,7 +764,7 @@ async function sendEmail(to: string, template: EmailTemplate): Promise<boolean> 
 export async function sendWelcomeEmail(subscriberId: number, email: string): Promise<boolean> {
   const template = getEmail1Template(email, subscriberId);
   const success = await sendEmail(email, template);
-  
+
   if (success) {
     // Create sequence status record
     const db = await getDb();
@@ -822,7 +776,7 @@ export async function sendWelcomeEmail(subscriberId: number, email: string): Pro
       });
     }
   }
-  
+
   return success;
 }
 
@@ -834,7 +788,7 @@ export async function processEmailSequence(): Promise<{ sent: number; errors: nu
   const now = new Date();
   let sent = 0;
   let errors = 0;
-  
+
   // Get all active subscribers with their sequence status
   const db = await getDb();
   if (!db) {
@@ -846,17 +800,17 @@ export async function processEmailSequence(): Promise<{ sent: number; errors: nu
     .from(emailSubscribers)
     .leftJoin(emailSequenceStatus, eq(emailSubscribers.id, emailSequenceStatus.subscriberId))
     .where(eq(emailSubscribers.isActive, true));
-  
+
   for (const row of subscribers) {
     const subscriber = row.email_subscribers;
     const status = row.email_sequence_status;
-    
+
     // Skip if unsubscribed
     if (status?.unsubscribedAt) continue;
-    
+
     const subscribedAt = subscriber.subscribedAt;
     const daysSinceSubscription = Math.floor((now.getTime() - subscribedAt.getTime()) / (1000 * 60 * 60 * 24));
-    
+
     try {
       // Email 1: Immediate (if not sent yet)
       if (!status) {
@@ -873,7 +827,7 @@ export async function processEmailSequence(): Promise<{ sent: number; errors: nu
         }
         continue;
       }
-      
+
       // Email 2: Day 2-3 (if email 1 sent and email 2 not sent)
       if (status.email1SentAt && !status.email2SentAt && daysSinceSubscription >= 2) {
         const template = getEmail2Template(subscriber.email, subscriber.id);
@@ -887,7 +841,7 @@ export async function processEmailSequence(): Promise<{ sent: number; errors: nu
         }
         continue;
       }
-      
+
       // Email 3: Day 5-7 (if email 2 sent and email 3 not sent)
       if (status.email2SentAt && !status.email3SentAt && daysSinceSubscription >= 5) {
         const template = getEmail3Template(subscriber.email, subscriber.id);
@@ -901,7 +855,7 @@ export async function processEmailSequence(): Promise<{ sent: number; errors: nu
         }
         continue;
       }
-      
+
       // Email 4: Day 10-14 (if email 3 sent and email 4 not sent)
       if (status.email3SentAt && !status.email4SentAt && daysSinceSubscription >= 10) {
         const template = getEmail4Template(subscriber.email, subscriber.id);
@@ -920,7 +874,7 @@ export async function processEmailSequence(): Promise<{ sent: number; errors: nu
       errors++;
     }
   }
-  
+
   console.log(`[EmailNurturing] Processed sequence: ${sent} sent, ${errors} errors`);
   return { sent, errors };
 }

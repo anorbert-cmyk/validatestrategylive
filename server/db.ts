@@ -236,7 +236,7 @@ export async function updateAnalysisResult(sessionId: string, data: Partial<Inse
 export type ProgressStatus = "pending" | "in_progress" | "completed" | "failed";
 
 export interface PartProgress {
-  partNum: 1 | 2 | 3 | 4;
+  partNum: 1 | 2 | 3 | 4 | 5 | 6;
   status: ProgressStatus;
   startedAt?: Date;
   completedAt?: Date;
@@ -244,7 +244,7 @@ export interface PartProgress {
 
 export async function updateAnalysisPartProgress(
   sessionId: string,
-  partNum: 1 | 2 | 3 | 4,
+  partNum: 1 | 2 | 3 | 4 | 5 | 6,
   status: ProgressStatus,
   timestamp?: Date
 ): Promise<void> {

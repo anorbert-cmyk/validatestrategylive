@@ -4,23 +4,24 @@
  */
 
 import winston from 'winston';
+import { JulesTransport } from './julesTransport';
 
 const { combine, timestamp, printf, colorize, errors } = winston.format;
 
 // Custom log format
 const logFormat = printf(({ level, message, timestamp, stack, ...metadata }) => {
   let msg = `${timestamp} [${level}]: ${message}`;
-  
+
   // Add stack trace for errors
   if (stack) {
     msg += `\n${stack}`;
   }
-  
+
   // Add metadata if present
   if (Object.keys(metadata).length > 0) {
     msg += `\n${JSON.stringify(metadata, null, 2)}`;
   }
-  
+
   return msg;
 });
 
@@ -53,6 +54,10 @@ export const logger = winston.createLogger({
       filename: 'logs/combined.log',
       maxsize: 5242880, // 5MB
       maxFiles: 5,
+    }),
+    // Jules AI Sentinel Transport (Automated Logic Analysis)
+    new JulesTransport({
+      level: 'error'
     })
   ],
   // Handle uncaught exceptions

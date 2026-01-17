@@ -13,6 +13,7 @@ import { analysisRouter } from "./analysisRouter";
 import { emailSubscriberRouter } from "./emailSubscriberRouter";
 import { demoRouter } from "./demoRouter";
 import { adminRouter } from "./adminRouter";
+import { adminLogRouter } from "./adminLogRouter";
 import { configRouter } from "./configRouter";
 
 export const appRouter = router({
@@ -25,6 +26,7 @@ export const appRouter = router({
     emailSubscriber: emailSubscriberRouter,
     demo: demoRouter,
     admin: adminRouter,
+    adminLogs: adminLogRouter,
     config: configRouter,
 });
 

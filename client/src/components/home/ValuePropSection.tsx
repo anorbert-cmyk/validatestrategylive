@@ -1,109 +1,189 @@
 import { useRef, useState, useEffect } from "react";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
+import { motion, AnimatePresence } from "framer-motion";
+import { Brain, Search, ShieldAlert, Target, Zap, BarChart3, Database } from "lucide-react";
 
-const LOG_LINES = [
-    { time: "00:01", level: "INFO", msg: "Initializing Valid8 Engine..." },
-    { time: "00:04", level: "SYS", msg: "Loading agent swarm [6/6]" },
-    { time: "00:12", level: "WARN", msg: "Competitor gap detected: Pricing model inefficient." },
-    { time: "00:45", level: "SUCCESS", msg: "Strategy blueprint generated. Confidence: 94%" },
+// Agent Definitions
+const AGENTS = [
+    { id: "research", icon: Search, label: "Deep Research", color: "text-blue-400", bg: "bg-blue-500/20", border: "border-blue-500/50" },
+    { id: "market", icon: BarChart3, label: "Market Analyst", color: "text-purple-400", bg: "bg-purple-500/20", border: "border-purple-500/50" },
+    { id: "competitor", icon: Target, label: "Competitor Spy", color: "text-red-400", bg: "bg-red-500/20", border: "border-red-500/50" },
+    { id: "tech", icon: Database, label: "Tech Auditor", color: "text-cyan-400", bg: "bg-cyan-500/20", border: "border-cyan-500/50" },
+    { id: "user", icon: Brain, label: "User Psychology", color: "text-pink-400", bg: "bg-pink-500/20", border: "border-pink-500/50" },
+    { id: "risk", icon: ShieldAlert, label: "Risk Assessor", color: "text-yellow-400", bg: "bg-yellow-500/20", border: "border-yellow-500/50" },
 ];
 
 export function ValuePropSection() {
     const reveal = useScrollReveal<HTMLElement>();
-    const [activeLogIndex, setActiveLogIndex] = useState(0);
+    const [activeAgent, setActiveAgent] = useState<number | null>(null);
 
-    // Simple log typing animation
+    // Cycling animation for active agent
     useEffect(() => {
         if (!reveal.isVisible) return;
         const interval = setInterval(() => {
-            setActiveLogIndex((prev) => (prev < LOG_LINES.length ? prev + 1 : prev));
-        }, 800);
+            setActiveAgent((prev) => (prev === null || prev >= AGENTS.length - 1 ? 0 : prev + 1));
+        }, 2000);
         return () => clearInterval(interval);
     }, [reveal.isVisible]);
 
     return (
         <section
             ref={reveal.ref}
-            className={`py-24 relative border-y border-border/40 bg-background/50 backdrop-blur-sm transition-opacity duration-1000 ${reveal.isVisible ? 'opacity-100' : 'opacity-0'
+            className={`py-32 relative border-y border-white/5 bg-black/40 backdrop-blur-sm overflow-hidden transition-opacity duration-1000 ${reveal.isVisible ? 'opacity-100' : 'opacity-0'
                 }`}
         >
-            <div className="container px-4 md:px-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center">
+            {/* Background Noise/Grid */}
+            <div className="absolute inset-0 opacity-10 pointer-events-none"
+                style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.15) 1px, transparent 0)', backgroundSize: '40px 40px' }}
+            />
 
-                    {/* LEFT: The Terminal Window */}
-                    <div className="relative group">
-                        <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-cyan-500/20 rounded-lg blur opacity-20 group-hover:opacity-40 transition duration-1000" />
+            <div className="container px-4 md:px-6 relative z-10">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
 
-                        <div className="relative rounded-lg border border-border bg-[#0a0a0a] font-mono text-xs md:text-sm shadow-2xl overflow-hidden">
-                            {/* Terminal Header */}
-                            <div className="flex items-center justify-between px-4 py-3 bg-muted/20 border-b border-border">
-                                <div className="flex gap-2">
-                                    <div className="w-3 h-3 rounded-full bg-red-500/80" />
-                                    <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-                                    <div className="w-3 h-3 rounded-full bg-green-500/80" />
-                                </div>
-                                <div className="text-muted-foreground opacity-50">kernel.log</div>
-                            </div>
+                    {/* LEFT: THE NEURAL HIVE (Swarm Visual) */}
+                    <div className="relative h-[500px] w-full flex items-center justify-center perspective-1000 group">
 
-                            {/* Terminal Body */}
-                            <div className="p-6 h-[300px] flex flex-col gap-3 font-mono">
-                                {LOG_LINES.map((line, i) => (
-                                    <div
-                                        key={i}
-                                        className={`transition-all duration-500 ${i < activeLogIndex ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"
-                                            }`}
-                                    >
-                                        <span className="text-muted-foreground select-none">[{line.time}]</span>{" "}
-                                        <span className={`
-                      font-bold 
-                      ${line.level === 'INFO' ? 'text-blue-400' : ''}
-                      ${line.level === 'SYS' ? 'text-purple-400' : ''}
-                      ${line.level === 'WARN' ? 'text-yellow-400' : ''}
-                      ${line.level === 'SUCCESS' ? 'text-green-400' : ''}
-                    `}>{line.level}</span>{" "}
-                                        <span className="text-foreground/90">{line.msg}</span>
-                                    </div>
-                                ))}
-                                {activeLogIndex >= LOG_LINES.length && (
-                                    <div className="animate-pulse text-primary mt-2">_</div>
-                                )}
+                        {/* Central Core */}
+                        <div className="absolute z-20 w-32 h-32 rounded-full border border-cyan-500/30 bg-black/80 backdrop-blur-md flex items-center justify-center shadow-[0_0_50px_rgba(6,182,212,0.2)]">
+                            <motion.div
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                                className="absolute inset-0 rounded-full border-t border-cyan-400/50"
+                            />
+                            <motion.div
+                                animate={{ rotate: -360 }}
+                                transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+                                className="absolute inset-2 rounded-full border-b border-purple-400/50"
+                            />
+                            <div className="text-center">
+                                <Zap className="w-8 h-8 text-cyan-400 mx-auto mb-1 fill-cyan-400/20" />
+                                <div className="text-[10px] uppercase tracking-widest text-cyan-200 font-mono">CORE</div>
                             </div>
                         </div>
+
+                        {/* Hexagonal Grid of Agents */}
+                        <div className="absolute inset-0">
+                            {AGENTS.map((agent, i) => {
+                                const angle = (i * 60) * (Math.PI / 180);
+                                const radius = 160; // Distance from center
+                                const x = Math.cos(angle) * radius;
+                                const y = Math.sin(angle) * radius;
+                                const isActive = activeAgent === i;
+
+                                return (
+                                    <motion.div
+                                        key={agent.id}
+                                        className="absolute left-1/2 top-1/2"
+                                        initial={{ x: 0, y: 0, opacity: 0 }}
+                                        animate={{
+                                            x: x - 40, // Centering offset (w-20/2)
+                                            y: y - 40,
+                                            opacity: 1,
+                                            scale: isActive ? 1.1 : 1
+                                        }}
+                                        transition={{ delay: i * 0.1, duration: 0.5 }}
+                                    >
+                                        {/* Connector Beam */}
+                                        <svg className="absolute top-1/2 left-1/2 w-[200px] h-2 -z-10 overflow-visible"
+                                            style={{
+                                                transform: `translate(-50%, -50%) rotate(${i * 60 + 180}deg)`,
+                                                transformOrigin: "center"
+                                            }}>
+                                            <line x1="100" y1="1" x2="200" y2="1" stroke="currentColor" className={`${isActive ? agent.color : "text-white/5"}`} strokeWidth="1" />
+                                            {isActive && (
+                                                <motion.circle
+                                                    r="3" fill="currentColor" className={agent.color}
+                                                    animate={{ cx: [200, 100], opacity: [0, 1, 0] }}
+                                                    transition={{ duration: 1.5, repeat: Infinity }}
+                                                />
+                                            )}
+                                        </svg>
+
+                                        {/* Agent Node */}
+                                        <div
+                                            className={`
+                                                relative w-20 h-20 rounded-xl border backdrop-blur-md flex flex-col items-center justify-center transition-all duration-300
+                                                ${isActive ? `${agent.border} ${agent.bg} shadow-[0_0_30px_rgba(0,0,0,0.5)]` : "border-white/10 bg-white/5 hover:border-white/20"}
+                                            `}
+                                            onMouseEnter={() => setActiveAgent(i)}
+                                        >
+                                            <agent.icon className={`w-6 h-6 mb-2 ${isActive ? agent.color : "text-muted-foreground"}`} />
+                                            <div className={`text-[9px] uppercase font-mono tracking-tighter ${isActive ? "text-white" : "text-muted-foreground"}`}>
+                                                {agent.label}
+                                            </div>
+
+                                            {/* Status Dot */}
+                                            <div className={`absolute top-2 right-2 w-1.5 h-1.5 rounded-full ${isActive ? "bg-green-400 animate-pulse" : "bg-white/10"}`} />
+                                        </div>
+                                    </motion.div>
+                                );
+                            })}
+                        </div>
+
+                        {/* Floating HUD Elements - Decorational */}
+                        <div className="absolute top-10 left-10 font-mono text-[10px] text-cyan-500/50">
+                            <div>SYS.METRICS</div>
+                            <div>CPU: 12%</div>
+                            <div>MEM: 4.2GB</div>
+                        </div>
+                        <div className="absolute bottom-10 right-10 font-mono text-[10px] text-purple-500/50 text-right">
+                            <div>NET.STATUS</div>
+                            <div>CONN: SECURE</div>
+                            <div>LATENCY: 12ms</div>
+                        </div>
+
                     </div>
 
-                    {/* RIGHT: Brutalist Content List */}
-                    <div className="space-y-12">
-                        {[
-                            {
-                                id: "01",
-                                title: "SWARM INTELLIGENCE",
-                                desc: "Six specialized AI agents working in parallel. Not a wrapper—a complete research team."
-                            },
-                            {
-                                id: "02",
-                                title: "24-HOUR VARIANCE",
-                                desc: "Agencies take 4 weeks. Valid8 takes 24 hours. Speed is the only moat left."
-                            },
-                            {
-                                id: "03",
-                                title: "STRATEGIC DEPTH",
-                                desc: "We analyze 50+ data points per competitor. Pricing models, positioning gaps, and user sentiment."
-                            }
-                        ].map((item) => (
-                            <div key={item.id} className="relative pl-8 border-l border-border/30 hover:border-primary/50 transition-colors duration-300">
-                                <div className="absolute -left-[5px] top-0 w-2.5 h-2.5 bg-background border border-border rounded-full" />
+                    {/* RIGHT: NARRATIVE CONTENT */}
+                    <div className="space-y-12 pl-0 lg:pl-10">
+                        <div className="space-y-4">
+                            <h2 className="text-4xl md:text-5xl font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-white to-white/50">
+                                NOT A WRAPPER. <br />
+                                <span className="text-cyan-400">A RESEARCH TEAM.</span>
+                            </h2>
+                            <p className="text-lg text-muted-foreground leading-relaxed max-w-lg">
+                                While other tools wrap a single LLM prompt, Valid8 spins up <span className="text-white font-medium">six specialized autonomous agents</span>. They debate, cross-reference, and validate each other's findings.
+                            </p>
+                        </div>
 
-                                <div className="font-mono text-xs text-primary mb-2 tracking-widest">
-                                    {`// ${item.id}`}
-                                </div>
-                                <h3 className="text-2xl font-bold tracking-tight mb-2 uppercase">
-                                    {item.title}
-                                </h3>
-                                <p className="text-muted-foreground leading-relaxed max-w-md">
-                                    {item.desc}
-                                </p>
-                            </div>
-                        ))}
+                        <div className="space-y-8">
+                            {[
+                                {
+                                    title: "Swarm Consensus",
+                                    desc: "Agents must agree on a finding before it makes the report. Eliminates 99% of hallucinations.",
+                                    icon: Zap,
+                                    color: "text-cyan-400"
+                                },
+                                {
+                                    title: "24-Hour Deep Dive",
+                                    desc: "The swarm runs for hours, not seconds. Visiting 50+ competitor sites, reading Reddit threads, and analyzing pricing tables.",
+                                    icon: Brain,
+                                    color: "text-purple-400"
+                                },
+                                {
+                                    title: "Strategic Blueprint",
+                                    desc: "Output isn't just text. It's a structured roadmap with specific, actionable steps to crush your competition.",
+                                    icon: Target,
+                                    color: "text-green-400"
+                                }
+                            ].map((item, idx) => (
+                                <motion.div
+                                    key={idx}
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 0.5 + (idx * 0.2) }}
+                                    className="flex gap-4 group"
+                                >
+                                    <div className={`mt-1 w-10 h-10 rounded bg-[#0a0a0a] border border-white/10 flex items-center justify-center shrink-0 group-hover:border-white/30 transition-colors`}>
+                                        <item.icon className={`w-5 h-5 ${item.color}`} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-bold text-white mb-1 group-hover:text-cyan-200 transition-colors">{item.title}</h3>
+                                        <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </div>
                     </div>
 
                 </div>

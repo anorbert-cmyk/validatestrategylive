@@ -29,6 +29,9 @@ import {
 import {
     updateAnalysisSessionStatus,
     updateAnalysisResult,
+    createAnalysisResult,
+    updateAnalysisPartProgress,
+    getUserById,
     getAnalysisSessionById,
 } from "../db";
 import { notifyOwner } from "../_core/notification";
@@ -119,6 +122,7 @@ export async function startAnalysisInBackground(
                     // Track part start for next part (fire-and-forget)
                     if (partNum < totalParts) {
                         trackPartStart(sessionId, partNum + 1);
+                        await updateAnalysisPartProgress(sessionId, (partNum + 1) as any, "in_progress", new Date());
                     }
 
                     // Track successful part completion (fire-and-forget)
@@ -129,7 +133,10 @@ export async function startAnalysisInBackground(
 
                     // Support all 6 parts for Syndicate tier
                     const partKey = `part${partNum}` as "part1" | "part2" | "part3" | "part4" | "part5" | "part6";
+
+                    // Update content AND status atomically
                     await updateAnalysisResult(sessionId, { [partKey]: content });
+                    await updateAnalysisPartProgress(sessionId, partNum as any, "completed", new Date());
 
                     // Record metric
                     recordMetric(sessionId, tier, 'part_complete', Date.now() - startTime);

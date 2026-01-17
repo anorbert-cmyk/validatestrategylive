@@ -18,6 +18,7 @@ import {
   cleanupExpiredChallengesDb
 } from "../db";
 import { ENV } from "../_core/env";
+import { BanService } from "./banService";
 
 const SIGNATURE_VALIDITY_MS = 30 * 60 * 1000; // 30 minutes for better UX
 
@@ -67,6 +68,9 @@ export async function verifyAdminSignatureWithChallenge(
 ): Promise<WalletAuthResult> {
   try {
     const normalizedAddress = claimedAddress.toLowerCase();
+
+    // 0. Check for Ban (Fail-Fast)
+    BanService.checkBan(normalizedAddress);
 
     // Check if we have a stored challenge for this address (from database)
     const storedChallenge = await getChallenge(normalizedAddress);
@@ -137,7 +141,19 @@ export async function verifyAdminSignatureWithChallenge(
           error: "Unauthorized: Not an admin wallet",
         };
       }
+
+      // SECURITY: Valid signature but NOT admin => RECORD ATTEMPT
+      BanService.recordFailedAttempt(recoveredAddress);
+
+      return {
+        success: false,
+        isAdmin: false,
+        error: "Unauthorized: Not an admin wallet",
+      };
     }
+
+    // Success: Admin authenticated
+    BanService.resetAttempts(recoveredAddress);
 
     // Check for replay attack
     const alreadyUsed = await isSignatureUsed(signature);

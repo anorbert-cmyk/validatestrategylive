@@ -7,9 +7,11 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { StatsOverview } from "@/components/admin/StatsOverview";
 import { OperationsMonitor } from "@/components/admin/OperationsMonitor";
 import { ErrorDashboard } from "@/components/admin/ErrorDashboard";
-import { LogViewer } from "@/components/admin/LogViewer";
 import { TransactionHistory } from "@/components/admin/TransactionHistory";
 import { EmailSubscribers } from "@/components/admin/EmailSubscribers";
+import { AdminLogViewer } from "@/components/admin/AdminLogViewer";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FileText, LayoutDashboard } from "lucide-react";
 
 export default function Admin() {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
@@ -18,6 +20,7 @@ export default function Admin() {
 
   // Historical metrics time range state
   const [metricsTimeRange, setMetricsTimeRange] = useState<24 | 168 | 720>(24);
+  const [activeTab, setActiveTab] = useState("dashboard");
 
   // ============ PROPS / DATA FETCHING ============
 
@@ -100,45 +103,63 @@ export default function Admin() {
       setWalletAddress={setWalletAddress}
       onRefreshData={handleRefresh}
     >
-      {/* 1. Revenue & High-Level Metrics */}
-      <StatsOverview
-        stats={stats}
-        isLoading={statsLoading}
-        txStats={{ totalWalletPurchases, uniqueWallets }}
-        isTxLoading={txLoading}
-      />
+      <Tabs defaultValue="dashboard" value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <div className="flex items-center justify-between">
+          <TabsList className="bg-muted/20 border border-border/50">
+            <TabsTrigger value="dashboard" className="gap-2">
+              <LayoutDashboard className="h-4 w-4" />
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="logs" className="gap-2">
+              <FileText className="h-4 w-4" />
+              System Logs
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-      {/* 2. Operations Center (The "Brain") */}
-      <OperationsMonitor
-        adminAuth={adminAuth}
-        operationsSummary={operationsSummary}
-        refetchSummary={refetchSummary}
-      />
+        <TabsContent value="dashboard" className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+          {/* 1. Revenue & High-Level Metrics */}
+          <StatsOverview
+            stats={stats}
+            isLoading={statsLoading}
+            txStats={{ totalWalletPurchases, uniqueWallets }}
+            isTxLoading={txLoading}
+          />
 
-      {/* 3. System Health & Errors */}
-      <ErrorDashboard
-        adminAuth={adminAuth}
-        errorDashboard={errorDashboard}
-        retryQueueStats={retryQueueStats}
-        refetchErrors={refetchErrors}
-        refetchQueue={refetchQueue}
-      />
+          {/* 2. Operations Center (The "Brain") */}
+          <OperationsMonitor
+            adminAuth={adminAuth}
+            operationsSummary={operationsSummary}
+            refetchSummary={refetchSummary}
+          />
 
-      {/* 4. Live Logs */}
-      <LogViewer adminAuth={adminAuth} />
+          {/* 3. System Health & Errors */}
+          <ErrorDashboard
+            adminAuth={adminAuth}
+            errorDashboard={errorDashboard}
+            retryQueueStats={retryQueueStats}
+            refetchErrors={refetchErrors}
+            refetchQueue={refetchQueue}
+          />
 
-      {/* 5. Data Tables (Transactions & Users) */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        <TransactionHistory
-          transactions={transactions}
-          isLoading={txLoading}
-        />
-        <EmailSubscribers
-          subscribers={emailSubscribers}
-          isLoading={emailLoading}
-          stats={emailStats}
-        />
-      </div>
+          {/* 4. Data Tables (Transactions & Users) */}
+          <div className="grid lg:grid-cols-2 gap-6">
+            <TransactionHistory
+              transactions={transactions}
+              isLoading={txLoading}
+            />
+            <EmailSubscribers
+              subscribers={emailSubscribers}
+              isLoading={emailLoading}
+              stats={emailStats}
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="logs">
+          <AdminLogViewer adminAuth={adminAuth} />
+        </TabsContent>
+      </Tabs>
     </AdminShell>
   );
 }

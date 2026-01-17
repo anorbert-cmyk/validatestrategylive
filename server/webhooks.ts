@@ -21,17 +21,7 @@ import {
   updatePurchaseWalletAddress,
 } from "./db";
 import { notifyOwner } from "./_core/notification";
-import { getTierConfig, getTierPrice, isMultiPartTier } from "../shared/pricing";
-import { generateSingleAnalysis, generateMultiPartAnalysis } from "./services/perplexityService";
-import { updateAnalysisResult, getUserById } from "./db";
-import { sendValidateStrategyEmail, isEmailConfigured } from "./services/emailService";
-import {
-  trackAnalysisStart,
-  trackPartComplete,
-  trackAnalysisComplete,
-  trackAnalysisFailure,
-} from "./services/safeOperationTracker";
-import { createMagicLinkToken, buildMagicLinkUrl } from "./auth/magicLink";
+// Imports removed (handled by analysisOrchestrator)
 
 const webhookRouter = Router();
 
@@ -196,8 +186,6 @@ webhookRouter.post("/lemonsqueezy", async (req: Request, res: Response) => {
  * This is called ONLY after payment is fully confirmed
  */
 async function startAnalysisAfterPayment(sessionId: string) {
-  const startTime = Date.now();
-
   try {
     const session = await getAnalysisSessionById(sessionId);
     if (!session) {
@@ -205,109 +193,26 @@ async function startAnalysisAfterPayment(sessionId: string) {
       return;
     }
 
-    // Track analysis start (fire-and-forget)
-    trackAnalysisStart(sessionId, session.tier, "system");
+    // Use the orchestrator to manage the entire analysis lifecycle
+    // This centralized handler ensures:
+    // 1. Initial status update & Result creation
+    // 2. Notification to owner
+    // 3. Background processing (6-part Swarm or Single)
+    // 4. Progress tracking, Metrics & Completion Emails
+    const { startAnalysisInBackground } = await import("./services/analysisOrchestrator");
 
-    // Update session status to processing
-    await updateAnalysisSessionStatus(sessionId, "processing");
-
-    // Create initial result record
-    await createAnalysisResult({
+    // Fire-and-forget background process
+    startAnalysisInBackground(
       sessionId,
-      userId: session.userId,
-      tier: session.tier,
-      problemStatement: session.problemStatement,
-    });
+      session.problemStatement,
+      session.tier,
+      session.email // Pass email for completion notification
+    );
 
-    // Notify owner of new purchase
-    const tierConfig = getTierConfig(session.tier);
-    await notifyOwner({
-      title: `New ${tierConfig?.displayName || session.tier} Purchase`,
-      content: `A new analysis has been purchased.\n\nTier: ${tierConfig?.displayName}\nAmount: $${getTierPrice(session.tier)}\nProblem: ${session.problemStatement.substring(0, 200)}...`,
-    });
-
-    // Get user email for notification
-    let userEmail = session.email;
-    if (!userEmail && session.userId) {
-      const user = await getUserById(session.userId);
-      userEmail = user?.email || null;
-    }
-
-    // Start analysis in background
-    if (isMultiPartTier(session.tier)) {
-      generateMultiPartAnalysis(session.problemStatement, {
-        onPartComplete: async (partNum, content) => {
-          // Track part completion (fire-and-forget)
-          trackPartComplete(sessionId, partNum, content, Date.now() - startTime);
-
-          const partKey = `part${partNum}` as "part1" | "part2" | "part3" | "part4" | "part5" | "part6";
-          await updateAnalysisResult(sessionId, { [partKey]: content });
-        },
-        onComplete: async (result) => {
-          await updateAnalysisResult(sessionId, {
-            fullMarkdown: result.fullMarkdown,
-            generatedAt: new Date(result.generatedAt),
-          });
-          await updateAnalysisSessionStatus(sessionId, "completed");
-
-          // Track analysis completion (fire-and-forget)
-          trackAnalysisComplete(sessionId, Date.now() - startTime);
-
-          // Send email notification with magic link
-          if (userEmail && isEmailConfigured()) {
-            const appUrl = process.env.VITE_APP_URL || 'https://validatestrategy.com';
-            await sendValidateStrategyEmail({
-              to: userEmail,
-              userName: userEmail.split('@')[0],
-              magicLinkUrl: `${appUrl}/analysis/${sessionId}`,
-              transactionId: sessionId,
-              amount: String(getTierPrice(session.tier)),
-              currency: 'USD',
-              tier: session.tier,
-            });
-            console.log(`[Webhook] Email sent to ${userEmail} for session ${sessionId}`);
-          }
-        },
-        onError: async (error) => {
-          // Track failure (fire-and-forget)
-          trackAnalysisFailure(sessionId, error instanceof Error ? error : new Error(String(error)), 1);
-
-          await updateAnalysisSessionStatus(sessionId, "failed");
-        },
-      });
-    } else {
-      const result = await generateSingleAnalysis(session.problemStatement, session.tier as "standard" | "medium");
-      await updateAnalysisResult(sessionId, {
-        singleResult: result.content,
-        generatedAt: new Date(result.generatedAt),
-      });
-      await updateAnalysisSessionStatus(sessionId, "completed");
-
-      // Track completion (fire-and-forget)
-      trackPartComplete(sessionId, 1, result.content, Date.now() - startTime);
-      trackAnalysisComplete(sessionId, Date.now() - startTime);
-
-      // Send email notification with magic link
-      if (userEmail && isEmailConfigured()) {
-        const appUrl = process.env.VITE_APP_URL || 'https://validatestrategy.com';
-        await sendValidateStrategyEmail({
-          to: userEmail,
-          userName: userEmail.split('@')[0],
-          magicLinkUrl: `${appUrl}/analysis/${sessionId}`,
-          transactionId: sessionId,
-          amount: String(getTierPrice(session.tier)),
-          currency: 'USD',
-          tier: session.tier,
-        });
-        console.log(`[Webhook] Email sent to ${userEmail} for session ${sessionId}`);
-      }
-    }
+    console.log(`[NOWPayments Webhook] Analysis handed off to orchestrator for session: ${sessionId}`);
   } catch (error) {
     console.error("[Analysis] Failed to start analysis:", error);
-
-    // Track failure (fire-and-forget)
-    trackAnalysisFailure(sessionId, error instanceof Error ? error : new Error(String(error)), 1);
-
+    // Fail safe updates
     await updateAnalysisSessionStatus(sessionId, "failed");
   }
 }

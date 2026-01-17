@@ -95,7 +95,7 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
       "Compliance Checkpoints",
       "72-Hour Delivery",
     ],
-    apiCalls: 4,
+    apiCalls: 6,
     isMultiPart: true,
   },
 };
@@ -116,12 +116,14 @@ export function isMultiPartTier(tier: Tier): boolean {
  * Multi-part analysis configuration
  */
 export const MULTI_PART_CONFIG = {
-  totalParts: 4,
+  totalParts: 6,
   parts: [
     { number: 1, name: "Discovery & Problem Analysis", description: "Deep dive into the problem space and user needs" },
-    { number: 2, name: "Strategic Design & Roadmap", description: "Design strategy and implementation roadmap" },
-    { number: 3, name: "AI Toolkit & Figma Prompts", description: "Practical tools and design prompts" },
-    { number: 4, name: "Risk, Metrics & Rationale", description: "Risk assessment and success metrics" },
+    { number: 2, name: "Competitor Deep-Dive", description: "Comprehensive market and competitor intelligence" },
+    { number: 3, name: "Strategic Roadmap", description: "Design strategy and implementation roadmap" },
+    { number: 4, name: "Core Design Prompts", description: "5 production-ready Figma prompts for core flows" },
+    { number: 5, name: "Advanced Design Prompts", description: "5 advanced prompts plus edge cases and empty states" },
+    { number: 6, name: "Risk, Metrics & Rationale", description: "Risk matrix, success metrics, and strategic defense" },
   ],
 };
 
