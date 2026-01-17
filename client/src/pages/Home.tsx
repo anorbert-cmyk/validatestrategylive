@@ -224,7 +224,7 @@ export default function Home() {
     {
       question: "How does the validation machine work?",
       answer:
-        "We don't just 'analyze'. We run your problem statement through a 4-phase adversarial stress-test. 1) Discovery & Problem Anatomy. 2) Strategic Design & Roadmap. 3) AI Toolkit & Prompts. 4) Risk Assessment & ROI. It's not advice; it's a simulation of your product's market reality.",
+        "We don't just 'analyze'. We run your problem statement through a 6-phase adversarial stress-test. 1) Discovery & Problem Anatomy. 2) Strategic Design & Roadmap. 3) AI Toolkit & Prompts. 4) Risk Assessment & ROI. 5) Competitor War Room. 6) Go-to-Market Plan. It's not advice; it's a simulation of your product's market reality.",
     },
     {
       question: "Is my IP safe?",
@@ -627,7 +627,7 @@ export default function Home() {
                   <h3 className="text-lg font-bold font-mono uppercase tracking-wide">AI Delivery</h3>
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed mb-6">
-                  Our multi-agent AI processes your problem through <strong className="text-foreground">4 phases</strong>. Receive your report via <strong className="text-foreground">email</strong> and dashboard.
+                  Our multi-agent AI processes your problem through <strong className="text-foreground">6 phases</strong>. Receive your report via <strong className="text-foreground">email</strong> and dashboard.
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <span className="px-2 py-1 text-[10px] font-mono uppercase bg-muted border border-border text-muted-foreground">Real-time</span>
