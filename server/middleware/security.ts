@@ -6,6 +6,7 @@
 import { Request, Response, NextFunction } from "express";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import { logger } from "../_core/logger";
 
 // Re-export rateLimit for use in other files if needed
 export { rateLimit };
@@ -182,14 +183,14 @@ export function requestLogger(req: Request, res: Response, next: NextFunction) {
   const path = req.path;
   
   // Log request (avoid logging sensitive data)
-  console.log(`[${timestamp}] ${method} ${path} - IP: ${ip}`);
+  logger.info(`[${timestamp}] ${method} ${path} - IP: ${ip}`);
   
   // Track response time
   const start = Date.now();
   res.on("finish", () => {
     const duration = Date.now() - start;
     if (duration > 5000) {
-      console.warn(`[SLOW REQUEST] ${method} ${path} took ${duration}ms`);
+      logger.warn(`[SLOW REQUEST] ${method} ${path} took ${duration}ms`);
     }
   });
   

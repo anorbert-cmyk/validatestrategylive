@@ -32,6 +32,7 @@ import {
     getAnalysisSessionById,
 } from "../db";
 import { notifyOwner } from "../_core/notification";
+import { logger } from "../_core/logger";
 import {
     trackAnalysisStart,
     trackPartStart,
@@ -63,7 +64,7 @@ export async function startAnalysisInBackground(
 
     // Log analysis start (or resume)
     if (resumeConfig) {
-        console.log(`[Analysis] RESUMING ${tier} analysis for session ${sessionId} from part ${resumeConfig.resumeFromPart}`);
+        logger.info(`[Analysis] RESUMING ${tier} analysis for session ${sessionId} from part ${resumeConfig.resumeFromPart}`);
         // We don't call trackAnalysisStart here because it's already an existing operation
     } else {
         logAnalysisStart(sessionId, tier, problemStatement);
@@ -74,7 +75,7 @@ export async function startAnalysisInBackground(
     // Check circuit breaker state before starting
     const circuitState = perplexityCircuitBreaker.getState();
     if (circuitState === CircuitState.OPEN) {
-        console.warn(`[Analysis] Circuit breaker OPEN - queueing session ${sessionId} for retry`);
+        logger.warn(`[Analysis] Circuit breaker OPEN - queueing session ${sessionId} for retry`);
 
         // Add to retry queue instead of failing immediately
         await addToRetryQueue({
@@ -103,7 +104,7 @@ export async function startAnalysisInBackground(
     }
 
     try {
-        console.log(`[Analysis] Starting ${tier} analysis for session ${sessionId}`);
+        logger.info(`[Analysis] Starting ${tier} analysis for session ${sessionId}`);
 
         if (isMultiPartTier(tier)) {
             // Syndicate tier: 6-part comprehensive APEX analysis with error handling
@@ -112,7 +113,7 @@ export async function startAnalysisInBackground(
 
             const result = await generateMultiPartAnalysis(problemStatement, {
                 onPartComplete: async (partNum, content, handoffState) => {
-                    console.log(`[Analysis] Part ${partNum} complete for session ${sessionId}`);
+                    logger.info(`[Analysis] Part ${partNum} complete for session ${sessionId}`);
                     logPartComplete(sessionId, partNum, totalParts);
 
                     // Track part start for next part (fire-and-forget)
@@ -148,7 +149,7 @@ export async function startAnalysisInBackground(
                     // Track analysis completion (fire-and-forget)
                     trackAnalysisComplete(sessionId, duration);
 
-                    console.log(`[Analysis] 6-part Syndicate analysis complete for session ${sessionId} in ${duration}ms`);
+                    logger.info(`[Analysis] 6-part Syndicate analysis complete for session ${sessionId} in ${duration}ms`);
 
                     // Send success email notification
                     if (email && isEmailConfigured()) {
@@ -164,7 +165,7 @@ export async function startAnalysisInBackground(
                     }
                 },
                 onError: async (error) => {
-                    console.error(`[Analysis] Error for session ${sessionId}:`, error);
+                    logger.error(`[Analysis] Error for session ${sessionId}:`, error);
 
                     // Check if we have partial results to save
                     if (partialResultsManager) {
@@ -176,7 +177,7 @@ export async function startAnalysisInBackground(
                         const minPercentage = (minParts / tierConfig.expectedParts) * 100;
                         if (completionPercentage >= minPercentage) {
                             // We have enough for partial delivery
-                            console.log(`[Analysis] Saving partial results (${completionPercentage}%) for session ${sessionId}`);
+                            logger.info(`[Analysis] Saving partial results (${completionPercentage}%) for session ${sessionId}`);
 
                             const partialMarkdown = partialResultsManager.generatePartialMarkdown();
                             await updateAnalysisResult(sessionId, {
@@ -187,7 +188,7 @@ export async function startAnalysisInBackground(
                             await updateAnalysisSessionStatus(sessionId, "completed");
 
                             // Log partial success
-                            console.log(`[Analysis] Partial success: ${completedParts.length}/${totalParts} parts completed for session ${sessionId}`);
+                            logger.info(`[Analysis] Partial success: ${completedParts.length}/${totalParts} parts completed for session ${sessionId}`);
 
                             // Track partial success (fire-and-forget)
                             trackPartialSuccess(sessionId, completedParts.length, totalParts);
@@ -215,11 +216,11 @@ export async function startAnalysisInBackground(
             const totalParts = 2;
             partialResultsManager = createPartialResultsManager(sessionId, tier, totalParts);
 
-            console.log(`[Analysis] Starting Insider 2-part analysis for session ${sessionId}`);
+            logger.info(`[Analysis] Starting Insider 2-part analysis for session ${sessionId}`);
 
             const result = await generateInsiderAnalysis(problemStatement, {
                 onPartComplete: async (partNum, content, handoffState) => {
-                    console.log(`[Analysis] Insider Part ${partNum} complete for session ${sessionId}`);
+                    logger.info(`[Analysis] Insider Part ${partNum} complete for session ${sessionId}`);
                     logPartComplete(sessionId, partNum, totalParts);
 
                     // Track part start for next part (fire-and-forget)
@@ -251,7 +252,7 @@ export async function startAnalysisInBackground(
                     // Track analysis completion (fire-and-forget)
                     trackAnalysisComplete(sessionId, duration);
 
-                    console.log(`[Analysis] 2-part Insider analysis complete for session ${sessionId} in ${duration}ms`);
+                    logger.info(`[Analysis] 2-part Insider analysis complete for session ${sessionId} in ${duration}ms`);
 
                     // Send email notification
                     if (email && isEmailConfigured()) {
@@ -267,7 +268,7 @@ export async function startAnalysisInBackground(
                     }
                 },
                 onError: async (error) => {
-                    console.error(`[Analysis] Insider error for session ${sessionId}:`, error);
+                    logger.error(`[Analysis] Insider error for session ${sessionId}:`, error);
 
                     // Check for partial results (at least part 1)
                     if (partialResultsManager) {
@@ -278,7 +279,7 @@ export async function startAnalysisInBackground(
                         const minParts = tierConfig.minPartsForPartialSuccess;
                         const minPercentage = (minParts / tierConfig.expectedParts) * 100;
                         if (completionPercentage >= minPercentage) {
-                            console.log(`[Analysis] Saving partial Insider results (${completionPercentage}%) for session ${sessionId}`);
+                            logger.info(`[Analysis] Saving partial Insider results (${completionPercentage}%) for session ${sessionId}`);
 
                             const partialMarkdown = partialResultsManager.generatePartialMarkdown();
                             await updateAnalysisResult(sessionId, {
@@ -289,7 +290,7 @@ export async function startAnalysisInBackground(
                             await updateAnalysisSessionStatus(sessionId, "completed");
 
                             // Log partial success
-                            console.log(`[Analysis] Partial success: ${completedParts.length}/${totalParts} parts completed for session ${sessionId}`);
+                            logger.info(`[Analysis] Partial success: ${completedParts.length}/${totalParts} parts completed for session ${sessionId}`);
 
                             // Track partial success (fire-and-forget)
                             trackPartialSuccess(sessionId, completedParts.length, totalParts);
@@ -313,7 +314,7 @@ export async function startAnalysisInBackground(
                 });
         } else {
             // Observer tier: Single analysis with retry wrapper
-            console.log(`[Analysis] Starting Observer single analysis for session ${sessionId}`);
+            logger.info(`[Analysis] Starting Observer single analysis for session ${sessionId}`);
 
             const result = await withRetry(
                 async () => generateSingleAnalysis(problemStatement, "standard"),
@@ -322,7 +323,7 @@ export async function startAnalysisInBackground(
                     baseDelay: tierConfig.baseDelay,
                     maxDelay: 30000,
                     onRetry: (attempt, error) => {
-                        console.log(`[Analysis] Observer retry ${attempt}/${tierConfig.maxRetries} for session ${sessionId}: ${error.message}`);
+                        logger.info(`[Analysis] Observer retry ${attempt}/${tierConfig.maxRetries} for session ${sessionId}: ${error.message}`);
                         recordMetric(sessionId, tier, 'retry', Date.now() - startTime);
                     },
                 }
@@ -342,7 +343,7 @@ export async function startAnalysisInBackground(
             trackPartComplete(sessionId, 1, result.content, duration);
             trackAnalysisComplete(sessionId, duration);
 
-            console.log(`[Analysis] Observer analysis complete for session ${sessionId} in ${duration}ms`);
+            logger.info(`[Analysis] Observer analysis complete for session ${sessionId} in ${duration}ms`);
 
             // Send email notification
             if (email && isEmailConfigured()) {
@@ -386,7 +387,7 @@ export async function handleAnalysisFailure(
     logError(analysisError, { sessionId, tier, duration });
     recordMetric(sessionId, tier, 'failure', duration);
 
-    console.error(`[Analysis] Failed for session ${sessionId}:`, analysisError.message);
+    logger.error(`[Analysis] Failed for session ${sessionId}:`, analysisError.message);
 
     // Check if we should add to retry queue (recoverable errors only)
     const isRetryable = analysisError.isRetryable &&
@@ -412,7 +413,7 @@ export async function handleAnalysisFailure(
             await notifyAnalysisFailed(sessionId, tier, email, true, analysisError);
         }
 
-        console.log(`[Analysis] Session ${sessionId} queued for retry`);
+        logger.info(`[Analysis] Session ${sessionId} queued for retry`);
     } else {
         // Non-retryable error - mark as failed
         await updateAnalysisSessionStatus(sessionId, "failed");

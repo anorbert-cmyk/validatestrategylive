@@ -11,6 +11,7 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "../_core/cookies";
 import { publicProcedure, router } from "../_core/trpc";
+import { config } from "../_core/config";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { getAnalysisResultBySessionId, getAnalysisSessionById } from "../db";
@@ -99,7 +100,7 @@ export const authRouter = router({
             const token = await createMagicLinkToken({ email: input.email });
 
             // Send email
-            const appUrl = process.env.VITE_APP_URL || 'http://localhost:3000'; // Fallback for local
+            const appUrl = config.VITE_APP_URL;
             const magicLinkUrl = `${appUrl}/login/magic?token=${token}`;
 
             await sendMagicLinkEmail(input.email, magicLinkUrl);
