@@ -20,6 +20,15 @@ import { createSessionJWT } from './magicLink';
 const NONCE_EXPIRY_MINUTES = 15;
 
 /**
+ * Redact wallet address for logging (privacy compliance)
+ * e.g., "0x1234567890abcdef..." -> "0x1234...cdef"
+ */
+function redactAddress(address: string): string {
+    if (!address || address.length < 12) return '0x***';
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
+/**
  * Generate a secure nonce for SIWE
  */
 function generateNonce(): string {
@@ -42,7 +51,7 @@ export async function createSiweNonce(walletAddress?: string): Promise<string> {
         expiresAt,
     });
 
-    console.log(`[SIWE] Created nonce for ${walletAddress || 'unknown wallet'}`);
+    console.log(`[SIWE] Created nonce for ${walletAddress ? redactAddress(walletAddress) : 'unknown wallet'}`);
     return nonce;
 }
 
@@ -115,7 +124,7 @@ export async function verifySiweSignature(params: {
         const recoveredAddress = ethers.verifyMessage(params.message, params.signature);
 
         if (recoveredAddress.toLowerCase() !== address) {
-            console.log(`[SIWE] Address mismatch: expected ${address}, got ${recoveredAddress.toLowerCase()}`);
+            console.log(`[SIWE] Address mismatch: expected ${redactAddress(address)}, got ${redactAddress(recoveredAddress.toLowerCase())}`);
             return { valid: false, hasPurchase: false, error: 'Invalid signature' };
         }
     } catch (error) {
@@ -142,7 +151,7 @@ export async function verifySiweSignature(params: {
         .limit(1);
 
     if (!purchase) {
-        console.log(`[SIWE] Wallet ${address} has no completed purchases`);
+        console.log(`[SIWE] Wallet ${redactAddress(address)} has no completed purchases`);
         return {
             valid: true,
             hasPurchase: false,
@@ -150,7 +159,7 @@ export async function verifySiweSignature(params: {
         };
     }
 
-    console.log(`[SIWE] Wallet ${address} verified with purchase ${purchase.sessionId}`);
+    console.log(`[SIWE] Wallet ${redactAddress(address)} verified with purchase ${purchase.sessionId}`);
 
     return {
         valid: true,

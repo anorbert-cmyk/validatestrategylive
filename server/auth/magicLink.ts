@@ -19,6 +19,16 @@ const MAGIC_LINK_EXPIRY_HOURS = 72; // 3 days
 const JWT_EXPIRY_DAYS = 30;
 
 /**
+ * Redact email for logging (GDPR/privacy compliance)
+ * e.g., "user@example.com" -> "u***@example.com"
+ */
+function redactEmail(email: string): string {
+    const [local, domain] = email.split('@');
+    if (!local || !domain) return '***@***';
+    return `${local[0]}***@${domain}`;
+}
+
+/**
  * Generate a secure random token
  */
 function generateSecureToken(): string {
@@ -47,7 +57,7 @@ export async function createMagicLinkToken(params: {
         expiresAt,
     });
 
-    console.log(`[MagicLink] Created token for ${params.email}, expires: ${expiresAt.toISOString()}`);
+    console.log(`[MagicLink] Created token for ${redactEmail(params.email)}, expires: ${expiresAt.toISOString()}`);
     return token;
 }
 
@@ -96,7 +106,7 @@ export async function verifyMagicLinkToken(token: string): Promise<{
         .set({ isUsed: true, usedAt: new Date() })
         .where(eq(magicLinkTokens.id, tokenRecord.id));
 
-    console.log(`[MagicLink] Token verified for ${tokenRecord.email}`);
+    console.log(`[MagicLink] Token verified for ${redactEmail(tokenRecord.email)}`);
 
     return {
         valid: true,
@@ -114,9 +124,11 @@ export async function createSessionJWT(params: {
     sessionId?: string | null;
     loginMethod: 'magic_link' | 'siwe';
 }): Promise<string> {
-    const secret = new TextEncoder().encode(
-        ENV.jwtSecret || 'default-secret-change-in-production'
-    );
+    // SECURITY: Fail fast if JWT secret is not configured
+    if (!ENV.jwtSecret) {
+        throw new Error('[SECURITY] JWT_SECRET environment variable is required');
+    }
+    const secret = new TextEncoder().encode(ENV.jwtSecret);
 
     const jwt = await new jose.SignJWT({
         email: params.email,
@@ -129,7 +141,7 @@ export async function createSessionJWT(params: {
         .setSubject(params.email)
         .sign(secret);
 
-    console.log(`[MagicLink] Created JWT session for ${params.email}`);
+    console.log(`[MagicLink] Created JWT session for ${redactEmail(params.email)}`);
     return jwt;
 }
 
@@ -146,9 +158,11 @@ export async function verifySessionJWT(token: string): Promise<{
     error?: string;
 }> {
     try {
-        const secret = new TextEncoder().encode(
-            ENV.jwtSecret || 'default-secret-change-in-production'
-        );
+        // SECURITY: Fail fast if JWT secret is not configured
+        if (!ENV.jwtSecret) {
+            throw new Error('[SECURITY] JWT_SECRET environment variable is required');
+        }
+        const secret = new TextEncoder().encode(ENV.jwtSecret);
 
         const { payload } = await jose.jwtVerify(token, secret);
 
