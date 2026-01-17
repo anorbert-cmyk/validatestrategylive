@@ -1,84 +1,183 @@
-# ValidateStrategyLive
+# ValidateStrategyLive 🚀
 
-ValidateStrategyLive is a modern SaaS platform designed to validate business strategies using AI-driven analysis. It leverages advanced prompt engineering and a multi-tier analysis engine (Observer, Insider, Syndicate) to provide actionable insights for entrepreneurs and businesses.
+**AI-Powered Product Validation Platform for Founders & Product Teams.**
 
-## 🏗️ Architecture
+[![CI Status](https://github.com/anorbert-cmyk/validatestrategylive/actions/workflows/ci.yml/badge.svg)](https://github.com/anorbert-cmyk/validatestrategylive/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
+[![Stack: T3-ish](https://img.shields.io/badge/Stack-Vite_React_tRPC_Drizzle-green.svg)](https://init.tips/)
 
-The project is built as a modular monolith using the T3 stack (modified):
+ValidateStrategyLive validates startup ideas in 24 hours using multi-agent AI analysis. It provides deep market research, competitor analysis, and strategic roadmaps to help founders build what people want.
 
-- **Frontend:** React 19, Vite, Tailwind CSS, Radix UI
-- **Backend:** Node.js, tRPC, Fastify (via adapter)
-- **Database:** PlanetScale (MySQL) with Drizzle ORM
-- **State Management:** React Query (Client), Event Sourcing (Server)
+---
 
-### Key Directories
+## 📚 Table of Contents
 
-- `client/`: Frontend React application
-- `server/`: Backend application and tRPC routers
-- `shared/`: Shared types and utilities
-- `drizzle/`: Database schema and migrations
-- `.github/`: CI/CD workflows
+- [Features](#-features)
+- [Tech Stack](#-tech-stack)
+- [Architecture](#-architecture)
+- [Getting Started](#-getting-started)
+- [Environment Variables](#-environment-variables)
+- [Deployment](#-deployment)
+- [Security](#-security)
+- [Contributing](#-contributing)
+
+---
+
+## ✨ Features
+
+- **Instant AI Analysis**: Transforms rough ideas into comprehensive validation reports.
+- **Multi-Tier Reports**:
+  - **Observer**: Quick market sniff test.
+  - **Insider**: Deep dive & competitor analysis.
+  - **Syndicate (APEX)**: Full strategic roadmap + 6-part deep analysis.
+- **Interactive Dashboard**: Real-time progress tracking of AI agent operations.
+- **Crypto & Fiat Payments**: Seamless checkout with Stripe and NOWPayments/Coinbase.
+- **Wallet Auth**: SIWE (Sign-In With Ethereum) for web3 natives.
+- **Magic Link Auth**: Passwordless email login for web2 users.
+
+---
+
+## 🛠 Tech Stack
+
+### Frontend
+
+- **Framework**: [React 18](https://react.dev/) + [Vite](https://vitejs.dev/)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS + Shadcn UI + Framer Motion
+- **State Management**: TanStack Query (via tRPC) + Wouter (Routing)
+
+### Backend
+
+- **Runtime**: Node.js (Express)
+- **API**: [tRPC](https://trpc.io/) (Type-safe API)
+- **Database**: MySQL (PlanetScale) via [Drizzle ORM](https://orm.drizzle.team/)
+- **AI Orchestration**: Perplexity API + OpenAI (reserved)
+
+### DevOps
+
+- **CI/CD**: GitHub Actions (Lint, Test, Build, Deploy)
+- **Hosting**: Render (Web Service + Workers)
+- **Package Manager**: pnpm
+
+---
+
+## 🏗 Architecture
+
+The system follows a modular monolith architecture with clear separation of concerns:
+
+```mermaid
+graph TD
+    Client[React Frontend] <-->|tRPC Typed API| Server[Express Server]
+    Server <-->|SQL| DB[(PlantScale MySQL)]
+    Server <-->|REST| AI[Perplexity/OpenAI APIs]
+    Server <-->|Webhooks| Stripe[Stripe/Payment Providers]
+    
+    subgraph "Backend Services"
+        Auth[Auth Service (JWT/SIWE)]
+        Prompt[Prompt Loader]
+        Queue[Retry Queue Worker]
+        Cron[Email Sequence Cron]
+    end
+```
+
+---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
 - Node.js v20+
-- npm v10+
+- pnpm v9+
+- MySQL Database (or PlanetScale connection)
 
 ### Installation
 
-```bash
-# Install dependencies for all workspaces
-npm install
+1. **Clone the repository**
+
+   ```bash
+   git clone https://github.com/anorbert-cmyk/validatestrategylive.git
+   cd validatestrategylive
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   pnpm install
+   ```
+
+3. **Set up environment variables**
+   Copy `.env.example` to `.env` and fill in the required values.
+
+   ```bash
+   cp .env.example .env
+   ```
+
+4. **Initialize Database**
+
+   ```bash
+   pnpm db:push
+   ```
+
+5. **Start Development Server**
+
+   ```bash
+   pnpm dev
+   ```
+
+   The app will be available at `http://localhost:5000` (frontend proxies to backend).
+
+---
+
+## 🔑 Environment Variables
+
+Required variables in `.env`:
+
+```env
+# Database
+DATABASE_URL="mysql://..."
+
+# Auth
+JWT_SECRET="super-secret-key"
+VITE_APP_URL="http://localhost:5000"
+
+# AI
+PERPLEXITY_API_KEY="pplx-..."
+
+# Payments
+STRIPE_SECRET_KEY="sk_test_..."
+STRIPE_WEBHOOK_SECRET="whsec_..."
+NOWPAYMENTS_API_KEY="..."
+
+# Email
+RESEND_API_KEY="re_..."
 ```
 
-### Development
-
-```bash
-# Start both frontend and backend in development mode
-npm run dev
-```
-
-The application will be available at `http://localhost:5173`.
-
-## 🧪 Testing & Verification
-
-The project enforces strict type safety and automated testing.
-
-### Run All Checks (CI Simulation)
-
-```bash
-# Linting, Type Checking, and Server Tests
-npm run check
-npm test
-```
-
-### Client-Side Tests (Vitest)
-
-```bash
-# Run frontend component tests
-npm run test:client
-```
-
-## 📦 Building for Production
-
-```bash
-# Build frontend and server
-npm run build
-```
+---
 
 ## 🔒 Security
 
-Security is a core principle. The application includes:
+- **Authentication**: Dual-stack auth (SIWE + Magic Link) with stateless JWT sessions.
+- **PII Protection**: Logs automatically redact email and wallet addresses.
+- **Replay Protection**: Nonces for SIWE and 24h expiration for email tokens.
+- **Rate Limiting**: Express-rate-limit configured on API routes.
+- **Headers**: Helmet.js security headers enabled.
 
-- **Helmet** headers for CSP
-- **Rate Limiting** (5 tiers)
-- **Signature Verification** for admin actions
-- **Input Validation** via Zod at all API boundaries
+---
 
 ## 🤝 Contributing
 
-1. Ensure all checks pass (`npm run check`)
-2. Follow the "Modular Router" pattern in `server/routers/`
-3. Add tests for critical logic
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+
+### Development Workflow
+
+1. Create a feature branch (`feat/amazing-feature`)
+2. Commit changes (we use Conventional Commits)
+3. Push to branch
+4. Open a Pull Request
+
+---
+
+## 📄 License
+
+Distributed under the MIT License. See `LICENSE` for more information.

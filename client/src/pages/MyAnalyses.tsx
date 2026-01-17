@@ -5,7 +5,7 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { 
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -15,11 +15,11 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useState } from "react";
-import { 
-  FileText, 
-  Clock, 
-  CheckCircle2, 
-  AlertCircle, 
+import {
+  FileText,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
   Loader2,
   Plus,
   Eye,
@@ -82,7 +82,7 @@ export default function MyAnalyses() {
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">My Analyses</h1>
             <p className="text-muted-foreground mt-1">View and manage your strategic analyses</p>
           </div>
-          <Button 
+          <Button
             onClick={() => setIsNewAnalysisOpen(true)}
             className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white shadow-lg"
           >
@@ -103,10 +103,18 @@ export default function MyAnalyses() {
                 const tierInfo = TIER_INFO[analysis.tier as keyof typeof TIER_INFO];
                 const TierIcon = tierInfo?.icon || Eye;
                 return (
-                  <div 
+                  <div
                     key={analysis.id}
-                    className="p-4 rounded-xl border border-blue-500/30 bg-blue-500/5 cursor-pointer hover:bg-blue-500/10 transition-all"
+                    className="p-4 rounded-xl border border-blue-500/30 bg-blue-500/5 cursor-pointer hover:bg-blue-500/10 transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                     onClick={() => navigate(`/analysis/${analysis.sessionId}`)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        navigate(`/analysis/${analysis.sessionId}`);
+                      }
+                    }}
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
@@ -169,10 +177,18 @@ export default function MyAnalyses() {
                 const tierInfo = TIER_INFO[analysis.tier as keyof typeof TIER_INFO];
                 const TierIcon = tierInfo?.icon || Eye;
                 return (
-                  <div 
+                  <div
                     key={analysis.id}
-                    className="p-4 rounded-xl border border-border bg-card/50 cursor-pointer hover:bg-card hover:border-primary/30 transition-all group"
+                    className="p-4 rounded-xl border border-border bg-card/50 cursor-pointer hover:bg-card hover:border-primary/30 transition-all group focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                     onClick={() => navigate(`/analysis/${analysis.sessionId}`)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        navigate(`/analysis/${analysis.sessionId}`);
+                      }
+                    }}
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
@@ -215,7 +231,7 @@ export default function MyAnalyses() {
                 Describe your problem or challenge in 2-3 sentences and select your analysis tier.
               </DialogDescription>
             </DialogHeader>
-            
+
             <div className="space-y-4 mt-4">
               {/* Problem Statement Input */}
               <div className="space-y-2">
@@ -242,11 +258,10 @@ export default function MyAnalyses() {
                       <button
                         key={key}
                         onClick={() => setSelectedTier(key)}
-                        className={`p-3 rounded-lg border text-left transition-all ${
-                          isSelected 
-                            ? `${tier.borderColor} ${tier.bgColor} ring-2 ring-offset-2 ring-offset-background ring-primary/50` 
-                            : 'border-border hover:border-primary/30'
-                        }`}
+                        className={`p-3 rounded-lg border text-left transition-all ${isSelected
+                          ? `${tier.borderColor} ${tier.bgColor} ring-2 ring-offset-2 ring-offset-background ring-primary/50`
+                          : 'border-border hover:border-primary/30'
+                          }`}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
@@ -271,7 +286,7 @@ export default function MyAnalyses() {
               </div>
 
               {/* Submit Button */}
-              <Button 
+              <Button
                 onClick={handleNewAnalysis}
                 disabled={createSession.isPending || newProblemStatement.length < 10}
                 className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600"

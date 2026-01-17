@@ -45,11 +45,7 @@ export function Navigation({
                     href="/"
                     className="flex items-center gap-2 hover:opacity-80 transition flex-shrink-0"
                 >
-                    <img
-                        src="/favicon.png"
-                        alt="V8"
-                        className="w-6 h-6 object-contain md:hidden"
-                    />
+                    <img src="/favicon-blue.png" alt="Valid8 Strategy Logo" className="h-8 w-auto object-contain" />
                     <span className="font-bold text-[10px] sm:text-sm tracking-tight font-mono md:hidden">
                         V<span className="text-primary hidden xs:inline">8</span>
                     </span>
