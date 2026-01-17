@@ -5,7 +5,7 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { 
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -15,11 +15,11 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { 
-  FileText, 
-  Clock, 
-  CheckCircle2, 
-  AlertCircle, 
+import {
+  FileText,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
   Loader2,
   Plus,
   Sparkles,
@@ -141,16 +141,14 @@ export default function Dashboard() {
               Main Menu
             </p>
 
-            <button 
+            <button
               onClick={() => switchView('output')}
-              className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-200 group relative overflow-hidden ${
-                currentView === 'output' ? 'sidebar-item-active' : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-              }`}
+              className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-200 group relative overflow-hidden ${currentView === 'output' ? 'sidebar-item-active' : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                }`}
             >
               <div className={`absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-purple-500/10 ${currentView === 'output' ? 'opacity-100' : 'opacity-0'} transition-opacity`} />
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-                currentView === 'output' ? 'bg-indigo-500/20' : 'bg-accent'
-              }`}>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${currentView === 'output' ? 'bg-indigo-500/20' : 'bg-accent'
+                }`}>
                 <FileText className={`w-5 h-5 ${currentView === 'output' ? 'text-indigo-400' : 'text-muted-foreground'}`} />
               </div>
               <div className="hidden lg:block relative z-10">
@@ -164,15 +162,13 @@ export default function Dashboard() {
               )}
             </button>
 
-            <button 
+            <button
               onClick={() => switchView('history')}
-              className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-200 group relative ${
-                currentView === 'history' ? 'sidebar-item-active' : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-              }`}
+              className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-200 group relative ${currentView === 'history' ? 'sidebar-item-active' : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                }`}
             >
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-                currentView === 'history' ? 'bg-indigo-500/20' : 'bg-accent'
-              }`}>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${currentView === 'history' ? 'bg-indigo-500/20' : 'bg-accent'
+                }`}>
                 <History className={`w-5 h-5 ${currentView === 'history' ? 'text-indigo-400' : ''}`} />
               </div>
               <div className="hidden lg:block">
@@ -308,7 +304,7 @@ export default function Dashboard() {
             {false && (
               <div className="w-full grid grid-cols-1 md:grid-cols-12 gap-6 animate-slide-up pb-8">
                 {/* ROW 1: METRICS & CONTEXT */}
-                
+
                 {/* 1. INPUT CONTEXT (Span 3) */}
                 <div className="col-span-12 md:col-span-3 dash-panel p-5 flex flex-col h-64 relative group overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-b from-accent/50 to-transparent opacity-0 group-hover:opacity-100 transition duration-500" />
@@ -343,7 +339,7 @@ export default function Dashboard() {
                         <span className="text-red-400 font-bold">CRITICAL</span>
                       </div>
                       <div className="w-full bg-card/50 h-1.5 rounded-full overflow-hidden backdrop-blur-sm border border-border">
-                        <div 
+                        <div
                           className="bg-gradient-to-r from-red-600 to-red-400 h-full transition-all duration-1000"
                           style={{ width: `${riskBar}%` }}
                         />
@@ -355,7 +351,7 @@ export default function Dashboard() {
                         <span className="text-yellow-400 font-bold">RESOLVING...</span>
                       </div>
                       <div className="w-full bg-card/50 h-1.5 rounded-full overflow-hidden backdrop-blur-sm border border-border">
-                        <div 
+                        <div
                           className="bg-gradient-to-r from-yellow-600 to-yellow-400 h-full transition-all duration-1000 delay-300"
                           style={{ width: `${ambiguityBar}%` }}
                         />
@@ -391,8 +387,8 @@ export default function Dashboard() {
                     {/* Simple bar chart visualization */}
                     <div className="flex items-end gap-1 h-full w-full">
                       {[40, 55, 45, 60, 75, 65, 80, 70, 85, 90, 85, 95].map((h, i) => (
-                        <div 
-                          key={i} 
+                        <div
+                          key={i}
                           className="flex-1 bg-gradient-to-t from-green-500/50 to-green-400/30 rounded-t transition-all duration-500"
                           style={{ height: `${h}%`, animationDelay: `${i * 100}ms` }}
                         />
@@ -402,7 +398,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* ROW 2: MAIN OUTPUT */}
-                
+
                 {/* 4. STRATEGIC REPORT (Span 8) */}
                 <div className="col-span-12 md:col-span-8 dash-panel p-0 flex flex-col h-[600px] relative overflow-hidden">
                   {/* Tabs Header */}
@@ -432,7 +428,7 @@ export default function Dashboard() {
                             <Zap className="w-5 h-5 text-indigo-400" /> Executive Summary
                           </h2>
                           <p className="text-muted-foreground leading-relaxed">
-                            {latestAnalysis.result && typeof (latestAnalysis.result as any)?.fullResult === 'string' 
+                            {latestAnalysis.result && typeof (latestAnalysis.result as any)?.fullResult === 'string'
                               ? ((latestAnalysis.result as any).fullResult as string).substring(0, 500) + '...'
                               : 'Analysis complete. View full results for detailed insights.'}
                           </p>
@@ -458,7 +454,7 @@ export default function Dashboard() {
                           </p>
                         </div>
 
-                        <Button 
+                        <Button
                           className="w-full"
                           onClick={() => navigate(`/analysis/${latestAnalysis.sessionId}`)}
                         >
@@ -470,7 +466,7 @@ export default function Dashboard() {
                       <div className="flex flex-col items-center justify-center h-full text-muted-foreground font-mono space-y-4">
                         <div className="w-12 h-12 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
                         <span className="animate-pulse tracking-widest text-xs">&gt; PROCESSING_ANALYSIS...</span>
-                        <Button 
+                        <Button
                           variant="outline"
                           onClick={() => navigate(`/analysis/${latestAnalysis.sessionId}`)}
                         >
@@ -579,7 +575,7 @@ export default function Dashboard() {
                       const tierInfo = TIER_INFO[analysis.tier as keyof typeof TIER_INFO];
                       const statusConfig = STATUS_CONFIG[analysis.status as keyof typeof STATUS_CONFIG];
                       const StatusIcon = statusConfig?.icon || Clock;
-                      
+
                       return (
                         <div key={analysis.sessionId} className="dash-panel p-6 group hover:border-primary/20 transition-all">
                           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
@@ -591,8 +587,8 @@ export default function Dashboard() {
                                 <span className={`tier-badge ${tierInfo.badge}`}>
                                   {tierInfo.name}
                                 </span>
-                                <Badge 
-                                  variant="outline" 
+                                <Badge
+                                  variant="outline"
                                   className={`${statusConfig?.color} border-current/30`}
                                 >
                                   <StatusIcon className={`h-3 w-3 mr-1 ${analysis.status === "processing" ? "animate-spin" : ""}`} />
@@ -679,12 +675,12 @@ export default function Dashboard() {
                     </div>
                     <div className="prose prose-invert max-w-none">
                       <p className="text-sm text-muted-foreground leading-relaxed">
-                        This strategic analysis examines your problem statement through the APEX framework, delivering actionable insights across four critical dimensions. The Discovery phase identifies core challenges and market opportunities, establishing a foundation for strategic decision-making. Our Strategic Design section outlines a phased roadmap with clear milestones and resource allocation. The AI Toolkit provides ready-to-use prompts and technical specifications to accelerate implementation. Finally, the Risk & Metrics component quantifies potential obstacles and defines success criteria, ensuring your strategy remains data-driven and adaptable. Each section is designed to transform your initial concept into a validated, executable plan with measurable outcomes.
+                        This strategic analysis examines your problem statement through the 6-phase APEX framework, delivering actionable insights across six critical dimensions. The Discovery phase identifies core challenges and market opportunities. Strategic Design outlines a phased roadmap with clear milestones. The AI Toolkit provides ready-to-use prompts and technical specifications. Risk & Metrics quantifies potential obstacles and defines success criteria. The Competitor War Room analyzes market positioning and competitive threats. Finally, the Go-to-Market Plan delivers a week-by-week launch strategy. Each section transforms your initial concept into a validated, executable plan with measurable outcomes.
                       </p>
                     </div>
                   </div>
                 )}
-                
+
                 {completedAnalyses.length > 0 ? (
                   <div className="grid gap-6">
                     {completedAnalyses.map((analysis) => (
@@ -733,7 +729,7 @@ export default function Dashboard() {
             {false && (
               <div className="animate-slide-up space-y-6">
                 <h2 className="text-xl font-bold text-foreground">Settings</h2>
-                
+
                 <div className="dash-panel p-6 space-y-6">
                   <div>
                     <h3 className="text-sm font-semibold text-foreground mb-2">Account</h3>
@@ -741,14 +737,14 @@ export default function Dashboard() {
                       Logged in as: {user?.name || 'User'}
                     </p>
                   </div>
-                  
+
                   <div className="border-t border-border pt-6">
                     <h3 className="text-sm font-semibold text-foreground mb-2">Preferences</h3>
                     <p className="text-sm text-muted-foreground">
                       Theme and notification settings coming soon.
                     </p>
                   </div>
-                  
+
                   <div className="border-t border-border pt-6">
                     <Button variant="outline" onClick={() => navigate('/')}>
                       <Home className="h-4 w-4 mr-2" />

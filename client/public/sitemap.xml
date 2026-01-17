@@ -7,7 +7,7 @@
   <!-- Homepage - Highest priority -->
   <url>
     <loc>https://validatestrategy.com/</loc>
-    <lastmod>2026-01-05</lastmod>
+    <lastmod>2026-01-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
@@ -15,7 +15,7 @@
   <!-- Demo Analysis - Public facing, important for conversions -->
   <url>
     <loc>https://validatestrategy.com/demo-analysis</loc>
-    <lastmod>2026-01-05</lastmod>
+    <lastmod>2026-01-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
