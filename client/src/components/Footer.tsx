@@ -6,7 +6,7 @@ export function Footer() {
                 <div className="flex flex-col md:flex-row items-center justify-between gap-6">
                     <div className="flex items-center gap-2">
                         <img src="/favicon-blue.png" alt="Valid8 Strategy Logo" className="h-8 w-auto object-contain" />
-                        <span className="font-bold text-sm tracking-tight font-mono">ValidateStrategy</span>
+                        <span className="font-bold text-sm tracking-tight font-mono">Valid8™</span>
                     </div>
 
                     <div className="flex items-center gap-6 text-xs text-muted-foreground">

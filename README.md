@@ -7,7 +7,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
 [![Stack: T3-ish](https://img.shields.io/badge/Stack-Vite_React_tRPC_Drizzle-green.svg)](https://init.tips/)
 
-ValidateStrategyLive validates startup ideas in 24 hours using multi-agent AI analysis. It provides deep market research, competitor analysis, and strategic roadmaps to help founders build what people want.
+**Valid8™ (by ValidateStrategy)** validates startup ideas in 24 hours using multi-agent AI analysis. The **Valid8 Engine™** provides deep market research, competitor analysis, and strategic roadmaps to help founders build what people want.
 
 ---
 
@@ -26,7 +26,7 @@ ValidateStrategyLive validates startup ideas in 24 hours using multi-agent AI an
 
 ## ✨ Features
 
-- **Instant AI Analysis**: Transforms rough ideas into comprehensive validation reports.
+- **Valid8 Engine™ Core**: Transforms rough ideas into comprehensive validation reports.
 - **Multi-Tier Reports**:
   - **Observer**: Quick market sniff test.
   - **Insider**: Deep dive & competitor analysis.
@@ -64,7 +64,7 @@ ValidateStrategyLive validates startup ideas in 24 hours using multi-agent AI an
 
 ## 🏗 Architecture
 
-The system follows a modular monolith architecture with clear separation of concerns:
+The **Valid8 System** follows a modular monolith architecture with clear separation of concerns:
 
 ```mermaid
 graph TD

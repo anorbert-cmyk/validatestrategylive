@@ -14,7 +14,7 @@ export function ComparisonSection() {
             <div className="max-w-6xl mx-auto px-6">
                 <div className="text-center mb-16">
                     <div className="inline-flex items-center gap-2 border border-primary/40 bg-primary/5 px-3 py-1 mb-6">
-                        <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-primary">Why ValidateStrategy</span>
+                        <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-primary">Why Valid8™</span>
                     </div>
                     <h2 className="text-3xl md:text-4xl font-bold mb-4">
                         The End-to-End <span className="text-primary">Validation Platform</span>
@@ -32,7 +32,7 @@ export function ComparisonSection() {
                                 <th className="text-left p-4 font-mono text-xs uppercase tracking-wider text-muted-foreground border-b border-border">Capability</th>
                                 <th className="text-center p-4 font-mono text-xs uppercase tracking-wider text-muted-foreground border-b border-border">DIY Approach</th>
                                 <th className="text-center p-4 font-mono text-xs uppercase tracking-wider text-muted-foreground border-b border-border">Hire Agency</th>
-                                <th className="text-center p-4 font-mono text-xs uppercase tracking-wider text-primary border-b border-border bg-primary/5">ValidateStrategy</th>
+                                <th className="text-center p-4 font-mono text-xs uppercase tracking-wider text-primary border-b border-border bg-primary/5">Valid8 Engine™</th>
                             </tr>
                         </thead>
                         <tbody className="text-sm">

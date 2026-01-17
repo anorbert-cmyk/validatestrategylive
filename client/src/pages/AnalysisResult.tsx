@@ -9,10 +9,10 @@ import { Progress } from "@/components/ui/progress";
 import { Markdown } from "@/components/Markdown";
 import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
-import { 
-  ArrowLeft, 
-  Download, 
-  Share2, 
+import {
+  ArrowLeft,
+  Download,
+  Share2,
   Loader2,
   CheckCircle2,
   Lightbulb,
@@ -70,23 +70,23 @@ const PART_CONFIG = [
 ];
 
 // Collapsible Section Component
-function CollapsibleSection({ 
-  title, 
-  icon: Icon, 
-  children, 
+function CollapsibleSection({
+  title,
+  icon: Icon,
+  children,
   defaultOpen = false,
   badge,
   color = "text-foreground"
-}: { 
-  title: string; 
-  icon?: React.ElementType; 
-  children: React.ReactNode; 
+}: {
+  title: string;
+  icon?: React.ElementType;
+  children: React.ReactNode;
   defaultOpen?: boolean;
   badge?: string;
   color?: string;
 }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
-  
+
   return (
     <div className="border border-border/50 rounded-lg overflow-hidden bg-card/50 backdrop-blur-sm">
       <button
@@ -120,7 +120,7 @@ function CollapsibleSection({
 // Copy Button Component
 function CopyButton({ text, label = "Copy" }: { text: string; label?: string }) {
   const [copied, setCopied] = useState(false);
-  
+
   const handleCopy = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(text);
@@ -131,7 +131,7 @@ function CopyButton({ text, label = "Copy" }: { text: string; label?: string }) 
       toast.error("Failed to copy");
     }
   }, [text]);
-  
+
   return (
     <Button
       variant="ghost"
@@ -155,21 +155,21 @@ function CopyButton({ text, label = "Copy" }: { text: string; label?: string }) 
 }
 
 // Figma Prompt Card Component
-function FigmaPromptCard({ 
-  number, 
-  title, 
-  description, 
+function FigmaPromptCard({
+  number,
+  title,
+  description,
   prompt,
   screen
-}: { 
-  number: number; 
-  title: string; 
-  description: string; 
+}: {
+  number: number;
+  title: string;
+  description: string;
   prompt: string;
   screen: string;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
-  
+
   return (
     <div className="border border-yellow-500/30 rounded-lg overflow-hidden bg-gradient-to-br from-yellow-500/5 to-orange-500/5">
       <div className="p-4">
@@ -185,9 +185,9 @@ function FigmaPromptCard({
           </div>
           <CopyButton text={prompt} label="Copy Prompt" />
         </div>
-        
+
         <p className="text-sm text-muted-foreground mt-3">{description}</p>
-        
+
         <button
           onClick={() => setIsExpanded(!isExpanded)}
           className="flex items-center gap-1 text-xs text-yellow-500 hover:text-yellow-400 mt-3 transition-colors"
@@ -204,7 +204,7 @@ function FigmaPromptCard({
             </>
           )}
         </button>
-        
+
         {isExpanded && (
           <div className="mt-3 p-3 bg-black/30 rounded-lg border border-yellow-500/20">
             <pre className="text-xs text-muted-foreground whitespace-pre-wrap font-mono overflow-x-auto">
@@ -220,20 +220,20 @@ function FigmaPromptCard({
 // Parse Figma prompts from Part 3 content
 function parseFigmaPrompts(content: string): Array<{ number: number; title: string; description: string; prompt: string; screen: string }> {
   const prompts: Array<{ number: number; title: string; description: string; prompt: string; screen: string }> = [];
-  
+
   // Match prompts with pattern: ### Prompt N: Title
   const promptRegex = /### Prompt (\d+): ([^\n]+)\n+```([^`]+)```/g;
   let match;
-  
+
   while ((match = promptRegex.exec(content)) !== null) {
     const number = parseInt(match[1]);
     const title = match[2].trim();
     const promptText = match[3].trim();
-    
+
     // Extract screen type from title or content
     const screenMatch = title.match(/\(([^)]+)\)/);
     const screen = screenMatch ? screenMatch[1] : `Screen ${number}`;
-    
+
     prompts.push({
       number,
       title: title.replace(/\([^)]+\)/, '').trim(),
@@ -242,7 +242,7 @@ function parseFigmaPrompts(content: string): Array<{ number: number; title: stri
       screen
     });
   }
-  
+
   // If no prompts found with regex, create placeholder prompts
   if (prompts.length === 0) {
     const defaultPrompts = [
@@ -257,7 +257,7 @@ function parseFigmaPrompts(content: string): Array<{ number: number; title: stri
       { title: "Mobile Navigation", screen: "Responsive", desc: "Bottom nav for mobile" },
       { title: "Success Confirmation", screen: "Completion", desc: "Post-purchase celebration" },
     ];
-    
+
     defaultPrompts.forEach((p, i) => {
       prompts.push({
         number: i + 1,
@@ -268,7 +268,7 @@ function parseFigmaPrompts(content: string): Array<{ number: number; title: stri
       });
     });
   }
-  
+
   return prompts;
 }
 
@@ -310,11 +310,11 @@ function parseMarkdownSections(content: string): Array<{ title: string; content:
   const lines = content.split('\n');
   let currentH2: { title: string; content: string[]; subsections: Array<{ title: string; content: string[] }> } | null = null;
   let currentH3: { title: string; content: string[] } | null = null;
-  
+
   for (const line of lines) {
     const h2Match = line.match(/^## (.+)$/);
     const h3Match = line.match(/^### (.+)$/);
-    
+
     if (h2Match) {
       // Save previous H3 if exists
       if (currentH3 && currentH2) {
@@ -359,7 +359,7 @@ function parseMarkdownSections(content: string): Array<{ title: string; content:
       currentH2.content.push(line);
     }
   }
-  
+
   // Save final H3 and H2
   if (currentH3 && currentH2) {
     currentH2.subsections.push({
@@ -378,7 +378,7 @@ function parseMarkdownSections(content: string): Array<{ title: string; content:
       }))
     });
   }
-  
+
   return sections;
 }
 
@@ -388,7 +388,7 @@ const DEMO_SESSION_ID = "test-apex-demo-LAIdJqey";
 // Demo Layout - simplified layout without sidebar for demo page
 function DemoLayout({ children }: { children: React.ReactNode }) {
   const [, navigate] = useLocation();
-  
+
   return (
     <div className="min-h-screen bg-background">
       {/* Simple header for demo */}
@@ -397,7 +397,7 @@ function DemoLayout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-4">
             <a href="/" className="flex items-center gap-2 font-bold text-lg">
               <Zap className="h-5 w-5 text-primary" />
-              ValidateStrategy
+              Valid8 Engine™
             </a>
             <span className="px-2 py-0.5 text-xs font-medium bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 rounded-full text-cyan-400">
               Demo Analysis
@@ -419,10 +419,10 @@ function DemoLayout({ children }: { children: React.ReactNode }) {
 export default function AnalysisResult() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const [, navigate] = useLocation();
-  
+
   // Check if this is the demo page
   const isDemoMode = sessionId === DEMO_SESSION_ID;
-  
+
   // Soft gate state for demo mode
   const [showSoftGate, setShowSoftGate] = useState(false);
   const [hasUnlockedDemo, setHasUnlockedDemo] = useState(() => {
@@ -432,25 +432,25 @@ export default function AnalysisResult() {
     return false;
   });
   const [hasTriggeredGate, setHasTriggeredGate] = useState(false);
-  
+
   // Scroll tracking for soft gate trigger at 50%
   useEffect(() => {
     if (!isDemoMode || hasUnlockedDemo || hasTriggeredGate) return;
-    
+
     const handleScroll = () => {
       const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
       const scrollPercent = (window.scrollY / scrollHeight) * 100;
-      
+
       if (scrollPercent >= 50 && !hasTriggeredGate) {
         setHasTriggeredGate(true);
         setShowSoftGate(true);
       }
     };
-    
+
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isDemoMode, hasUnlockedDemo, hasTriggeredGate]);
-  
+
   const handleSoftGateSubmit = (email: string) => {
     // Store email (could be sent to backend later)
     localStorage.setItem('demoEmail', email);
@@ -458,13 +458,13 @@ export default function AnalysisResult() {
     setHasUnlockedDemo(true);
     setShowSoftGate(false);
   };
-  
+
   const handleSoftGateSkip = () => {
     // Allow skip but remember they skipped
     localStorage.setItem('demoSkipped', 'true');
     setShowSoftGate(false);
   };
-  
+
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [activeTab, setActiveTab] = useState("overview");
@@ -491,7 +491,7 @@ export default function AnalysisResult() {
 
   const tierInfo = session ? TIER_INFO[session.tier as keyof typeof TIER_INFO] : null;
   const isMultiPart = session?.tier === "full";
-  
+
   // Extract progress status from result (6 parts for Syndicate tier)
   const part1Status = (result?.part1Status as ProgressStatus) || "pending";
   const part2Status = (result?.part2Status as ProgressStatus) || "pending";
@@ -501,7 +501,7 @@ export default function AnalysisResult() {
   const part6Status = (result?.part6Status as ProgressStatus) || "pending";
   const currentPart = result?.currentPart || 0;
   const estimatedCompletionAt = result?.estimatedCompletionAt;
-  
+
   // Calculate progress for multi-part analysis (6 parts for Syndicate)
   const completedParts = [part1Status, part2Status, part3Status, part4Status, part5Status, part6Status].filter(s => s === "completed").length;
   const progressPercent = isMultiPart ? (completedParts / 6) * 100 : (result?.singleResult ? 100 : 0);
@@ -542,7 +542,7 @@ export default function AnalysisResult() {
   // Handle PDF export - must be before early return to maintain hook order
   const handleExportPDF = useCallback(async () => {
     if (!session || !result) return;
-    
+
     setIsExporting(true);
     try {
       // Collect all content for PDF
@@ -553,7 +553,7 @@ export default function AnalysisResult() {
         createdAt: new Date().toISOString(),
         parts: [] as Array<{ title: string; content: string }>
       };
-      
+
       if (isMultiPart) {
         if (result.part1) content.parts.push({ title: "Part 1: Discovery & Problem Analysis", content: result.part1 });
         if (result.part2) content.parts.push({ title: "Part 2: Competitor Deep-Dive", content: result.part2 });
@@ -564,20 +564,20 @@ export default function AnalysisResult() {
       } else if (result.singleResult) {
         content.parts.push({ title: "Analysis Result", content: result.singleResult });
       }
-      
+
       // Create markdown content
       let markdown = `# ${content.title}\n\n`;
       markdown += `**Tier:** ${content.tier}\n\n`;
       markdown += `**Problem Statement:**\n${content.problemStatement}\n\n`;
       markdown += `**Generated:** ${new Date(content.createdAt).toLocaleString()}\n\n`;
       markdown += `---\n\n`;
-      
+
       for (const part of content.parts) {
         markdown += `## ${part.title}\n\n`;
         markdown += `${part.content}\n\n`;
         markdown += `---\n\n`;
       }
-      
+
       // Create blob and download
       const blob = new Blob([markdown], { type: 'text/markdown' });
       const url = URL.createObjectURL(blob);
@@ -588,7 +588,7 @@ export default function AnalysisResult() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      
+
       toast.success("Analysis exported successfully!");
     } catch (error) {
       console.error("Export failed:", error);
@@ -626,24 +626,24 @@ export default function AnalysisResult() {
   const renderPart3Content = (content: string) => {
     const figmaPrompts = parseFigmaPrompts(content);
     const sections = parseMarkdownSections(content);
-    
+
     // Find the Figma prompts section
-    const figmaSection = sections.find(s => 
-      s.title.toLowerCase().includes('figma') || 
+    const figmaSection = sections.find(s =>
+      s.title.toLowerCase().includes('figma') ||
       s.title.toLowerCase().includes('prompt')
     );
-    
+
     // Get other sections (non-figma)
-    const otherSections = sections.filter(s => 
-      !s.title.toLowerCase().includes('figma') && 
+    const otherSections = sections.filter(s =>
+      !s.title.toLowerCase().includes('figma') &&
       !s.title.toLowerCase().includes('prompt')
     );
-    
+
     return (
       <div className="space-y-6">
         {/* AI Toolkit Section */}
-        <CollapsibleSection 
-          title="AI-Enhanced Execution Toolkit" 
+        <CollapsibleSection
+          title="AI-Enhanced Execution Toolkit"
           icon={Wrench}
           defaultOpen={true}
           badge="6 Tools"
@@ -659,8 +659,8 @@ export default function AnalysisResult() {
         </CollapsibleSection>
 
         {/* Deliverables Framework */}
-        <CollapsibleSection 
-          title="Deliverables Framework" 
+        <CollapsibleSection
+          title="Deliverables Framework"
           icon={FileText}
           defaultOpen={false}
           color="text-yellow-500"
@@ -694,7 +694,7 @@ export default function AnalysisResult() {
               </div>
             </div>
           </div>
-          
+
           <div className="p-6">
             <div className="grid gap-4 md:grid-cols-2">
               {figmaPrompts.map((prompt) => (
@@ -720,9 +720,9 @@ export default function AnalysisResult() {
     if (partNum === 3) {
       return renderPart3Content(content);
     }
-    
+
     const sections = parseMarkdownSections(content);
-    
+
     if (sections.length === 0) {
       return (
         <div className="prose prose-invert max-w-none">
@@ -730,20 +730,20 @@ export default function AnalysisResult() {
         </div>
       );
     }
-    
+
     // Group sections by level
     const h2Sections = sections.filter(s => s.level === 2);
-    
+
     return (
       <div className="space-y-4">
         {h2Sections.map((section, index) => {
           const Icon = SECTION_ICONS[section.title] || FileText;
           const partConfig = PART_CONFIG[partNum - 1];
-          
+
           // Combine section content with subsections
           const hasDirectContent = section.content && section.content.trim().length > 0;
           const hasSubsections = section.subsections && section.subsections.length > 0;
-          
+
           return (
             <CollapsibleSection
               key={index}
@@ -760,7 +760,7 @@ export default function AnalysisResult() {
                     <Markdown>{section.content}</Markdown>
                   </div>
                 )}
-                
+
                 {/* Subsections (H3) */}
                 {hasSubsections && (
                   <div className="space-y-3 mt-4">
@@ -784,119 +784,119 @@ export default function AnalysisResult() {
 
   // Choose layout based on demo mode
   const Layout = isDemoMode ? DemoLayout : DashboardLayout;
-  
+
   return (
     <Layout>
       <div className="space-y-6">
         {/* Header - hidden in demo mode since DemoLayout has its own */}
         {!isDemoMode && (
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold">Analysis Result</h1>
-                {tierInfo && (
-                  <div className="flex items-center gap-2">
-                    <span className={`tier-badge ${tierInfo.badge}`}>
-                      {tierInfo.name}
-                    </span>
-                    {tierInfo.isApex && (
-                      <span className="px-2 py-0.5 text-xs font-medium bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 rounded-full text-cyan-400">
-                        APEX • Perplexity Powered
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back
+              </Button>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-xl font-bold">Analysis Result</h1>
+                  {tierInfo && (
+                    <div className="flex items-center gap-2">
+                      <span className={`tier-badge ${tierInfo.badge}`}>
+                        {tierInfo.name}
                       </span>
-                    )}
-                  </div>
-                )}
+                      {tierInfo.isApex && (
+                        <span className="px-2 py-0.5 text-xs font-medium bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 rounded-full text-cyan-400">
+                          APEX • Perplexity Powered
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {session?.status === "processing" ? "Analysis in progress..." : "Completed"}
+                </p>
               </div>
-              <p className="text-sm text-muted-foreground">
-                {session?.status === "processing" ? "Analysis in progress..." : "Completed"}
-              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* Analysis Switcher Dropdown */}
+              {completedAnalyses.length > 1 && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <History className="h-4 w-4 mr-2" />
+                      Switch Analysis
+                      <ChevronsUpDown className="h-4 w-4 ml-2" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-80">
+                    <DropdownMenuLabel>Your Analyses</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {completedAnalyses.map((analysis) => {
+                      const isActive = analysis.sessionId === sessionId;
+                      const tierName = TIER_INFO[analysis.tier as keyof typeof TIER_INFO]?.name || analysis.tier;
+                      return (
+                        <DropdownMenuItem
+                          key={analysis.sessionId}
+                          onClick={() => {
+                            if (!isActive) {
+                              localStorage.setItem("activeAnalysisId", analysis.sessionId);
+                              navigate(`/analysis/${analysis.sessionId}`);
+                            }
+                          }}
+                          className={`flex flex-col items-start gap-1 py-2 ${isActive ? "bg-primary/10" : ""}`}
+                        >
+                          <div className="flex items-center gap-2 w-full">
+                            <span className="text-xs px-1.5 py-0.5 rounded bg-muted">{tierName}</span>
+                            {isActive && <CheckCircle2 className="h-3 w-3 text-primary ml-auto" />}
+                          </div>
+                          <span className="text-xs text-muted-foreground line-clamp-1">
+                            {analysis.problemStatement.substring(0, 60)}...
+                          </span>
+                        </DropdownMenuItem>
+                      );
+                    })}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+
+              <Button variant="outline" size="sm">
+                <Share2 className="h-4 w-4 mr-2" />
+                Share
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportPDF}
+                disabled={isExporting || session?.status === "processing"}
+              >
+                {isExporting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4 mr-2" />
+                    Export PDF
+                  </>
+                )}
+              </Button>
+              <Button
+                className="bg-primary hover:bg-primary/90"
+                size="sm"
+                onClick={() => setShowNewAnalysisModal(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                New Analysis
+              </Button>
             </div>
           </div>
-          
-          <div className="flex items-center gap-2">
-            {/* Analysis Switcher Dropdown */}
-            {completedAnalyses.length > 1 && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <History className="h-4 w-4 mr-2" />
-                    Switch Analysis
-                    <ChevronsUpDown className="h-4 w-4 ml-2" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-80">
-                  <DropdownMenuLabel>Your Analyses</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {completedAnalyses.map((analysis) => {
-                    const isActive = analysis.sessionId === sessionId;
-                    const tierName = TIER_INFO[analysis.tier as keyof typeof TIER_INFO]?.name || analysis.tier;
-                    return (
-                      <DropdownMenuItem
-                        key={analysis.sessionId}
-                        onClick={() => {
-                          if (!isActive) {
-                            localStorage.setItem("activeAnalysisId", analysis.sessionId);
-                            navigate(`/analysis/${analysis.sessionId}`);
-                          }
-                        }}
-                        className={`flex flex-col items-start gap-1 py-2 ${isActive ? "bg-primary/10" : ""}`}
-                      >
-                        <div className="flex items-center gap-2 w-full">
-                          <span className="text-xs px-1.5 py-0.5 rounded bg-muted">{tierName}</span>
-                          {isActive && <CheckCircle2 className="h-3 w-3 text-primary ml-auto" />}
-                        </div>
-                        <span className="text-xs text-muted-foreground line-clamp-1">
-                          {analysis.problemStatement.substring(0, 60)}...
-                        </span>
-                      </DropdownMenuItem>
-                    );
-                  })}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-            
-            <Button variant="outline" size="sm">
-              <Share2 className="h-4 w-4 mr-2" />
-              Share
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={handleExportPDF}
-              disabled={isExporting || session?.status === "processing"}
-            >
-              {isExporting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Download className="h-4 w-4 mr-2" />
-                  Export PDF
-                </>
-              )}
-            </Button>
-            <Button 
-              className="bg-primary hover:bg-primary/90"
-              size="sm"
-              onClick={() => setShowNewAnalysisModal(true)}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              New Analysis
-            </Button>
-          </div>
-        </div>
         )}
-        
+
         {/* New Analysis Modal */}
-        <NewAnalysisModal 
-          open={showNewAnalysisModal} 
+        <NewAnalysisModal
+          open={showNewAnalysisModal}
           onOpenChange={setShowNewAnalysisModal}
           onSuccess={(newSessionId) => {
             navigate(`/analysis/${newSessionId}`);
@@ -927,7 +927,7 @@ export default function AnalysisResult() {
                   backgroundSize: '20px 20px'
                 }} />
               </div>
-              
+
               <div className="relative space-y-6">
                 {/* Header with status */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -947,7 +947,7 @@ export default function AnalysisResult() {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-4">
                     {timeRemaining !== null && (
                       <div className="flex items-center gap-2 px-3 py-1.5 bg-cyan-500/10 border border-cyan-500/20 rounded-lg">
@@ -967,7 +967,7 @@ export default function AnalysisResult() {
                 {/* Main progress bar */}
                 <div className="space-y-2">
                   <div className="h-3 bg-muted/30 rounded-full overflow-hidden">
-                    <div 
+                    <div
                       className="h-full bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full transition-all duration-500 relative overflow-hidden"
                       style={{ width: `${progressPercent}%` }}
                     >
@@ -986,17 +986,16 @@ export default function AnalysisResult() {
                     const status = getPartStatus(part.number);
                     const isActive = status === "in_progress";
                     const isComplete = status === "completed";
-                    
+
                     return (
-                      <div 
+                      <div
                         key={part.number}
-                        className={`p-3 rounded-lg border transition-all duration-300 ${
-                          isActive 
-                            ? `bg-gradient-to-br ${part.gradient} ${part.borderColor} shadow-lg` 
-                            : isComplete 
-                              ? 'bg-green-500/10 border-green-500/30' 
+                        className={`p-3 rounded-lg border transition-all duration-300 ${isActive
+                            ? `bg-gradient-to-br ${part.gradient} ${part.borderColor} shadow-lg`
+                            : isComplete
+                              ? 'bg-green-500/10 border-green-500/30'
                               : 'bg-muted/20 border-border/50'
-                        }`}
+                          }`}
                       >
                         <div className="flex items-center gap-2 mb-2">
                           {isComplete ? (
@@ -1076,9 +1075,9 @@ export default function AnalysisResult() {
                     Overview
                   </TabsTrigger>
                   {PART_CONFIG.map((part) => (
-                    <TabsTrigger 
+                    <TabsTrigger
                       key={part.number}
-                      value={`part${part.number}`} 
+                      value={`part${part.number}`}
                       disabled={!result[`part${part.number}` as keyof typeof result]}
                       className="text-xs sm:text-sm py-2"
                     >
@@ -1152,7 +1151,7 @@ export default function AnalysisResult() {
                 {PART_CONFIG.map((part) => {
                   const partKey = `part${part.number}` as "part1" | "part2" | "part3" | "part4" | "part5" | "part6";
                   const partContent = result[partKey];
-                  
+
                   return (
                     <TabsContent key={part.number} value={`part${part.number}`}>
                       <Card className={`glass-panel ${part.borderColor} bg-gradient-to-br ${part.gradient}`}>
@@ -1225,7 +1224,7 @@ export default function AnalysisResult() {
                         </p>
                       </div>
                     </div>
-                    <Button 
+                    <Button
                       className="bg-purple-500 hover:bg-purple-600"
                       onClick={() => navigate("/")}
                     >
@@ -1238,7 +1237,7 @@ export default function AnalysisResult() {
           </>
         )}
       </div>
-      
+
       {/* Soft Gate Modal for Demo Mode */}
       {isDemoMode && (
         <SoftGateModal

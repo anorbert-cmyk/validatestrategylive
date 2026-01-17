@@ -81,7 +81,7 @@ export function useAdminAuth(): UseAdminAuthReturn {
             const { challenge, timestamp } = await requestChallenge.mutateAsync({ walletAddress: address });
 
             // Sign the challenge
-            const message = `ValidateStrategy Admin Login\n\nChallenge: ${challenge}\nTimestamp: ${timestamp}\n\nSign this message to authenticate.`;
+            const message = `Valid8 Admin Console\n\nChallenge: ${challenge}\nTimestamp: ${timestamp}\n\nSign this message to authenticate.`;
             const signature = await window.ethereum.request({
                 method: "personal_sign",
                 params: [message, address],

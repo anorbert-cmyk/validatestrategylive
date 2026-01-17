@@ -33,7 +33,7 @@ export function FAQSection() {
         {
             question: "Is this better than a human consultant?",
             answer:
-                "A human consultant costs $15k, takes 4 weeks, and gives you their opinion. ValidateStrategy costs $99, takes 24 hours, and gives you data-backed patterns from Nielsen Norman & Baymard. You decide which is better math.",
+                "A human consultant costs $15k, takes 4 weeks, and gives you their opinion. Valid8 costs $99, takes 24 hours, and gives you data-backed patterns from Nielsen Norman & Baymard. You decide which is better math.",
         },
         {
             question: "Why should I trust this?",

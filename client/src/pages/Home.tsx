@@ -6,6 +6,7 @@ import { FAQSection } from "@/components/home/FAQSection";
 import { FeaturesSection } from "@/components/home/FeaturesSection";
 import { HeroSection } from "@/components/home/HeroSection";
 import { PricingSection } from "@/components/home/PricingSection";
+import { ValuePropSection } from "@/components/home/ValuePropSection";
 import { trpc } from "@/lib/trpc";
 import type { Tier } from "@shared/pricing";
 import { useEffect, useState } from "react";
@@ -240,6 +241,8 @@ export default function Home() {
           createSessionIsPending={createSession.isPending}
           onNavigateToDemo={() => navigate("/demo-analysis")}
         />
+
+        <ValuePropSection />
 
         <FeaturesSection />
 
