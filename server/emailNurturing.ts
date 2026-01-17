@@ -15,7 +15,7 @@ interface EmailTemplate {
 
 // Base URL for links in emails
 const getBaseUrl = () => {
-  return 'https://validatestrategy.com';
+  return process.env.VITE_APP_URL || 'https://validatestrategy.com';
 };
 
 /**

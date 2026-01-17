@@ -250,7 +250,7 @@ async function sendEmailNotification(
 ): Promise<boolean> {
   try {
     // Replace placeholder with actual URL
-    const analysisUrl = `${process.env.VITE_APP_URL || "https://validatestrategy.com"}/analysis/${sessionId}`;
+    const analysisUrl = `${process.env.VITE_APP_URL || "http://localhost:3000"}/analysis/${sessionId}`;
     const processedHtml = html.replace(/\{\{ANALYSIS_URL\}\}/g, analysisUrl);
 
     await sendEmail({

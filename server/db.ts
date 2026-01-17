@@ -509,7 +509,8 @@ export async function markWebhookProcessed(
 export async function saveEmailSubscriber(
   email: string,
   source: string = "demo_gate",
-  verificationToken?: string
+  verificationToken?: string,
+  verificationTokenExpiresAt?: Date
 ): Promise<{ success: boolean; isNew: boolean; subscriberId?: number; isVerified?: boolean }> {
   const db = await getDb();
   if (!db) {
@@ -536,6 +537,7 @@ export async function saveEmailSubscriber(
       email,
       source,
       verificationToken,
+      verificationTokenExpiresAt,
       verificationSentAt: verificationToken ? new Date() : undefined,
       isVerified: false,
     });
@@ -551,11 +553,11 @@ export async function saveEmailSubscriber(
   }
 }
 
-export async function verifyEmailSubscriber(token: string): Promise<{ success: boolean; email?: string }> {
+export async function verifyEmailSubscriber(token: string): Promise<{ success: boolean; email?: string; error?: string }> {
   const db = await getDb();
   if (!db) {
     console.warn("[Database] Cannot verify email subscriber: database not available");
-    return { success: false };
+    return { success: false, error: "Database unavailable" };
   }
 
   try {
@@ -565,7 +567,12 @@ export async function verifyEmailSubscriber(token: string): Promise<{ success: b
       .limit(1);
 
     if (subscriber.length === 0) {
-      return { success: false };
+      return { success: false, error: "Invalid token" };
+    }
+
+    // Check expiration
+    if (subscriber[0].verificationTokenExpiresAt && new Date() > subscriber[0].verificationTokenExpiresAt) {
+      return { success: false, error: "Token expired" };
     }
 
     // Update subscriber as verified
@@ -573,14 +580,15 @@ export async function verifyEmailSubscriber(token: string): Promise<{ success: b
       .set({
         isVerified: true,
         verifiedAt: new Date(),
-        verificationToken: null // Clear token after use
+        verificationToken: null, // Clear token after use
+        verificationTokenExpiresAt: null
       })
       .where(eq(emailSubscribers.id, subscriber[0].id));
 
     return { success: true, email: subscriber[0].email };
   } catch (error) {
     console.error("[Database] Error verifying email subscriber:", error);
-    return { success: false };
+    return { success: false, error: "Internal error" };
   }
 }
 

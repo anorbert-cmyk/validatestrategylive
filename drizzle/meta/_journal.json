@@ -15,6 +15,13 @@
       "when": 1768579220809,
       "tag": "0001_simple_famine",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1768667371173,
+      "tag": "0002_tearful_carlie_cooper",
+      "breakpoints": true
     }
   ]
 }

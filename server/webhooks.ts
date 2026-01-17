@@ -255,7 +255,7 @@ async function startAnalysisAfterPayment(sessionId: string) {
 
           // Send email notification with magic link
           if (userEmail && isEmailConfigured()) {
-            const appUrl = process.env.VITE_APP_URL || 'https://validatestrategy.com';
+            const appUrl = process.env.VITE_APP_URL || 'http://localhost:3000';
             await sendValidateStrategyEmail({
               to: userEmail,
               userName: userEmail.split('@')[0],
@@ -289,7 +289,7 @@ async function startAnalysisAfterPayment(sessionId: string) {
 
       // Send email notification with magic link
       if (userEmail && isEmailConfigured()) {
-        const appUrl = process.env.VITE_APP_URL || 'https://validatestrategy.com';
+        const appUrl = process.env.VITE_APP_URL || 'http://localhost:3000';
         await sendValidateStrategyEmail({
           to: userEmail,
           userName: userEmail.split('@')[0],

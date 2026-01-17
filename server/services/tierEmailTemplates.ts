@@ -103,7 +103,7 @@ export function generateTierEmailHTML(
         <p style="margin: 0; font-size: 14px; color: #94a3b8; text-align: center;">
           💡 ${upgradeMessage}
           <br><br>
-          <a href="https://validatestrategy.com/#pricing" style="color: ${accentColor}; text-decoration: underline;">
+          <a href="${process.env.VITE_APP_URL || 'http://localhost:3000'}/#pricing" style="color: ${accentColor}; text-decoration: underline;">
             Learn about ${nextTier} →
           </a>
         </p>
@@ -267,7 +267,7 @@ export function generateTierEmailText(
   
   let upgradeText = "";
   if (upgradeMessage && nextTier) {
-    upgradeText = `\n---\n💡 ${upgradeMessage}\nLearn more: https://validatestrategy.com/#pricing\n`;
+    upgradeText = `\n---\n💡 ${upgradeMessage}\nLearn more: ${process.env.VITE_APP_URL || 'http://localhost:3000'}/#pricing\n`;
   }
 
   return `${tierBadge}

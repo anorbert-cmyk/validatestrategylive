@@ -225,6 +225,7 @@ export const emailSubscribers = mysqlTable("email_subscribers", {
     unsubscribedAt: timestamp("unsubscribedAt"),
     // Double opt-in verification
     verificationToken: varchar("verificationToken", { length: 64 }),
+    verificationTokenExpiresAt: timestamp("verificationTokenExpiresAt"),
     verificationSentAt: timestamp("verificationSentAt"),
     isVerified: boolean("isVerified").default(false).notNull(),
     verifiedAt: timestamp("verifiedAt"),

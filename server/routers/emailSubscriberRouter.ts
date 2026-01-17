@@ -54,9 +54,10 @@ export const emailSubscriberRouter = router({
 
             // Generate verification token
             const verificationToken = generateVerificationToken();
+            const verificationTokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
             // Save subscriber with verification token
-            const result = await saveEmailSubscriber(input.email, input.source, verificationToken);
+            const result = await saveEmailSubscriber(input.email, input.source, verificationToken, verificationTokenExpiresAt);
 
             // If email already exists and is verified, return success
             if (!result.isNew && result.isVerified) {
@@ -77,6 +78,7 @@ export const emailSubscriberRouter = router({
                         await db.update(emailSubscribers)
                             .set({
                                 verificationToken,
+                                verificationTokenExpiresAt,
                                 verificationSentAt: new Date()
                             })
                             .where(eq(emailSubscribers.id, subscriber.id));
@@ -85,7 +87,7 @@ export const emailSubscriberRouter = router({
             }
 
             // Send verification email
-            const appUrl = process.env.VITE_APP_URL || 'https://validatestrategy.com';
+            const appUrl = process.env.VITE_APP_URL || 'http://localhost:3000';
             const verificationUrl = `${appUrl}/verify-email?token=${verificationToken}`;
 
             try {
@@ -119,7 +121,7 @@ export const emailSubscriberRouter = router({
             if (!result.success) {
                 throw new TRPCError({
                     code: "BAD_REQUEST",
-                    message: "Invalid or expired verification link"
+                    message: result.error || "Invalid or expired verification link"
                 });
             }
 
