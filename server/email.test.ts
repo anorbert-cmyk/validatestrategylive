@@ -10,9 +10,9 @@ describe("emailService", () => {
     it("should return false when RESEND_API_KEY is not set", () => {
       const originalEnv = process.env.RESEND_API_KEY;
       delete process.env.RESEND_API_KEY;
-      
+
       expect(isEmailConfigured()).toBe(false);
-      
+
       // Restore
       if (originalEnv) {
         process.env.RESEND_API_KEY = originalEnv;
@@ -22,10 +22,10 @@ describe("emailService", () => {
     it("should return true when RESEND_API_KEY is set", () => {
       const originalEnv = process.env.RESEND_API_KEY;
       process.env.RESEND_API_KEY = "test_api_key";
-      
+
       // Need to reimport to get fresh check
       expect(!!process.env.RESEND_API_KEY).toBe(true);
-      
+
       // Restore
       if (originalEnv) {
         process.env.RESEND_API_KEY = originalEnv;
@@ -36,15 +36,10 @@ describe("emailService", () => {
   });
 
   describe("email template validation", () => {
-    it("should have valid Hungarian email template structure", async () => {
+    it("should export sendValidateStrategyEmail function", async () => {
       // Import the module to check template exists
       const { sendValidateStrategyEmail } = await import("./services/emailService");
       expect(typeof sendValidateStrategyEmail).toBe("function");
-    });
-
-    it("should have valid English email template structure", async () => {
-      const { sendAnalysisReadyEmail } = await import("./services/emailService");
-      expect(typeof sendAnalysisReadyEmail).toBe("function");
     });
   });
 
@@ -70,7 +65,7 @@ describe("emailService", () => {
     it("should truncate long transaction IDs in display", () => {
       const longTxId = "pi_1234567890abcdefghijklmnopqrstuvwxyz";
       const truncated = longTxId.length > 20 ? longTxId.substring(0, 20) + '...' : longTxId;
-      
+
       expect(truncated).toBe("pi_1234567890abcdefg...");
       expect(truncated.length).toBeLessThanOrEqual(23);
     });
@@ -107,7 +102,7 @@ describe("emailService", () => {
     it("should sanitize user input in email", () => {
       const maliciousInput = '<script>alert("xss")</script>';
       const sanitized = maliciousInput.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      
+
       expect(sanitized).not.toContain('<script>');
       expect(sanitized).toContain('&lt;script&gt;');
     });

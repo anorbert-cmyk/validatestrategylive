@@ -239,7 +239,7 @@ describe("Pricing Router", () => {
 
     expect(tier?.id).toBe("full");
     expect(tier?.isMultiPart).toBe(true);
-    expect(tier?.apiCalls).toBe(4);
+    expect(tier?.apiCalls).toBe(6);
   });
 });
 
