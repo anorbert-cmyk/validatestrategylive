@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
     Dialog,
     DialogContent,
@@ -86,7 +87,14 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 ) : (
                     <form onSubmit={handleSubmit} className="space-y-4 pt-2">
                         <div className="space-y-2">
+                            <Label
+                                htmlFor="login-email"
+                                className="text-xs font-mono uppercase tracking-wide text-muted-foreground"
+                            >
+                                Email Address
+                            </Label>
                             <Input
+                                id="login-email"
                                 type="email"
                                 placeholder="founder@startup.com"
                                 value={email}
@@ -94,7 +102,11 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
                                 disabled={isSubmitting}
                                 className="font-mono bg-muted/50 border-input"
                                 autoFocus
+                                aria-describedby="login-email-description"
                             />
+                            <p id="login-email-description" className="sr-only">
+                                Enter your email to receive a magic link for passwordless login
+                            </p>
                         </div>
                         <Button
                             type="submit"

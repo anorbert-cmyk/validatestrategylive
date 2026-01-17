@@ -226,6 +226,7 @@ export const emailSubscribers = mysqlTable("email_subscribers", {
     // Double opt-in verification
     verificationToken: varchar("verificationToken", { length: 64 }),
     verificationSentAt: timestamp("verificationSentAt"),
+    verificationTokenExpiresAt: timestamp("verificationTokenExpiresAt"), // 24h expiration for replay attack prevention
     isVerified: boolean("isVerified").default(false).notNull(),
     verifiedAt: timestamp("verifiedAt"),
 });

@@ -531,12 +531,17 @@ export async function saveEmailSubscriber(
       };
     }
 
-    // Insert new subscriber with verification token
+    // Insert new subscriber with verification token (24h expiration for security)
+    const tokenExpiresAt = verificationToken
+      ? new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours from now
+      : undefined;
+
     const result = await db.insert(emailSubscribers).values({
       email,
       source,
       verificationToken,
       verificationSentAt: verificationToken ? new Date() : undefined,
+      verificationTokenExpiresAt: tokenExpiresAt,
       isVerified: false,
     });
 
@@ -551,11 +556,11 @@ export async function saveEmailSubscriber(
   }
 }
 
-export async function verifyEmailSubscriber(token: string): Promise<{ success: boolean; email?: string }> {
+export async function verifyEmailSubscriber(token: string): Promise<{ success: boolean; email?: string; error?: string }> {
   const db = await getDb();
   if (!db) {
     console.warn("[Database] Cannot verify email subscriber: database not available");
-    return { success: false };
+    return { success: false, error: "Database not available" };
   }
 
   try {
@@ -565,7 +570,18 @@ export async function verifyEmailSubscriber(token: string): Promise<{ success: b
       .limit(1);
 
     if (subscriber.length === 0) {
-      return { success: false };
+      return { success: false, error: "Invalid or already used token" };
+    }
+
+    // SECURITY: Check if token has expired (24h window)
+    const expiresAt = subscriber[0].verificationTokenExpiresAt;
+    if (expiresAt && new Date() > expiresAt) {
+      console.warn(`[Security] Expired verification token used for: ${subscriber[0].email}`);
+      // Clear the expired token
+      await db.update(emailSubscribers)
+        .set({ verificationToken: null, verificationTokenExpiresAt: null })
+        .where(eq(emailSubscribers.id, subscriber[0].id));
+      return { success: false, error: "Token has expired. Please request a new verification email." };
     }
 
     // Update subscriber as verified
@@ -573,14 +589,15 @@ export async function verifyEmailSubscriber(token: string): Promise<{ success: b
       .set({
         isVerified: true,
         verifiedAt: new Date(),
-        verificationToken: null // Clear token after use
+        verificationToken: null, // Clear token after use
+        verificationTokenExpiresAt: null, // Clear expiration
       })
       .where(eq(emailSubscribers.id, subscriber[0].id));
 
     return { success: true, email: subscriber[0].email };
   } catch (error) {
     console.error("[Database] Error verifying email subscriber:", error);
-    return { success: false };
+    return { success: false, error: "Verification failed" };
   }
 }
 
