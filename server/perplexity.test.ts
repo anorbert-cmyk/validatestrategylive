@@ -78,12 +78,13 @@ describe("perplexityService", () => {
       await generateMultiPartAnalysis("Test problem", callbacks);
 
       expect(onPartComplete).toHaveBeenCalledTimes(6); // Updated from 4 to 6 for Syndicate tier
-      expect(onPartComplete).toHaveBeenCalledWith(1, "Mock analysis response");
-      expect(onPartComplete).toHaveBeenCalledWith(2, "Mock analysis response");
-      expect(onPartComplete).toHaveBeenCalledWith(3, "Mock analysis response");
-      expect(onPartComplete).toHaveBeenCalledWith(4, "Mock analysis response");
-      expect(onPartComplete).toHaveBeenCalledWith(5, "Mock analysis response");
-      expect(onPartComplete).toHaveBeenCalledWith(6, "Mock analysis response");
+      // Third argument is the accumulated handoffState string from RLM pattern
+      expect(onPartComplete).toHaveBeenCalledWith(1, "Mock analysis response", expect.any(String));
+      expect(onPartComplete).toHaveBeenCalledWith(2, "Mock analysis response", expect.any(String));
+      expect(onPartComplete).toHaveBeenCalledWith(3, "Mock analysis response", expect.any(String));
+      expect(onPartComplete).toHaveBeenCalledWith(4, "Mock analysis response", expect.any(String));
+      expect(onPartComplete).toHaveBeenCalledWith(5, "Mock analysis response", expect.any(String));
+      expect(onPartComplete).toHaveBeenCalledWith(6, "Mock analysis response", expect.any(String));
     });
 
     it("should call onComplete when all parts are done", async () => {
@@ -129,8 +130,9 @@ describe("perplexityService", () => {
       await generateInsiderAnalysis("Test problem", callbacks);
 
       expect(onPartComplete).toHaveBeenCalledTimes(2);
-      expect(onPartComplete).toHaveBeenCalledWith(1, "Mock analysis response");
-      expect(onPartComplete).toHaveBeenCalledWith(2, "Mock analysis response");
+      // Third argument is the handoffState string from RLM pattern
+      expect(onPartComplete).toHaveBeenCalledWith(1, "Mock analysis response", expect.any(String));
+      expect(onPartComplete).toHaveBeenCalledWith(2, "Mock analysis response", expect.any(String));
     });
   });
 

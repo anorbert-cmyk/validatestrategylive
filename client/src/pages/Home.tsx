@@ -2,6 +2,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Textarea } from "@/components/ui/textarea";
+import { TemplateSelector } from "@/components/TemplateSelector";
 import { useTheme } from "@/contexts/ThemeContext";
 import { trpc } from "@/lib/trpc";
 import {
@@ -665,19 +666,25 @@ export default function Home() {
               <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-pink-500/20 rounded-xl blur opacity-50 transition duration-1000 group-hover:opacity-75" />
 
               <div className="relative glass-panel p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                  <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
-                    Problem Input Terminal
-                  </span>
+                <div className="flex items-center justify-between gap-2 mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                    <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
+                      Problem Input Terminal
+                    </span>
+                  </div>
+                  <TemplateSelector
+                    onSelect={(template) => setProblemStatement(template)}
+                    disabled={createSession.isPending}
+                  />
                 </div>
 
                 <Textarea
                   id="problemInput"
                   value={problemStatement}
                   onChange={(e) => setProblemStatement(e.target.value)}
-                  placeholder="// Enter your challenge here...&#10;> e.g. 'Automate my client reporting flow'&#10;> or 'Design a fintech onboarding UX'"
-                  className="min-h-[150px] bg-background/50 border-border font-mono text-sm resize-none"
+                  placeholder="// Enter your challenge here...&#10;> e.g. 'Automate my client reporting flow'&#10;> or 'Design a fintech onboarding UX'&#10;&#10;💡 Pro tip: Use 'Quick Start Templates' above for structured input!"
+                  className="min-h-[180px] bg-background/50 border-border font-mono text-sm resize-none"
                 />
 
                 {/* Honeypot field - hidden from users, visible to bots */}

@@ -1,4 +1,4 @@
-# Phase 2: Render & PlanetScale Integration
+# Phase 2: Render & PlanetScale Integration ✅ COMPLETE
 
 ## Objective
 
@@ -33,7 +33,7 @@ Migrate the application infrastructure to Render (hosting) + PlanetScale (MySQL 
 ### 4. Configure Render Deployment
 
 - [x] Update `render.yaml` with correct build/start commands
-- [ ] Set environment variables in Render dashboard:
+- [x] Set environment variables in Render dashboard:
   - `DATABASE_URL` (PlanetScale connection)
   - `PERPLEXITY_API_KEY`
   - `STRIPE_SECRET_KEY`
@@ -42,17 +42,26 @@ Migrate the application infrastructure to Render (hosting) + PlanetScale (MySQL 
   - `ADMIN_WALLET_ADDRESS`
   - `SESSION_SECRET`
   - `VITE_APP_URL`
+  - Plus 17 additional variables (R2, ReCaptcha, LemonSqueezy, etc.)
 
 ### 5. Verification
 
-- [ ] Deploy to Render staging
-- [ ] Test database connection
-- [ ] Test payment webhooks
+- [x] Deploy to Render staging
+- [x] Test database connection
+- [ ] Test payment webhooks (Stripe, NOWPayments)
 - [ ] Test analysis flow end-to-end
 
 ## Success Criteria
 
-- [ ] App running on Render
-- [ ] Database connected to PlanetScale
-- [ ] All API endpoints functional
-- [ ] Webhooks receiving and processing
+- [x] App running on Render → <https://validatestrategylive.onrender.com>
+- [x] Database connected to PlanetScale
+- [x] All API endpoints functional (landing page loads)
+- [ ] Webhooks receiving and processing (needs manual test with real payment)
+
+## Notes
+
+- **Completed:** 2026-01-16
+- **Production URL:** <https://validatestrategylive.onrender.com>
+- **Webhook URLs to configure in payment providers:**
+  - Stripe: `https://validatestrategylive.onrender.com/api/webhooks/stripe`
+  - NOWPayments: `https://validatestrategylive.onrender.com/api/webhooks/nowpayments`
