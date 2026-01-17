@@ -47,7 +47,9 @@ export async function createMagicLinkToken(params: {
         expiresAt,
     });
 
-    console.log(`[MagicLink] Created token for ${params.email}, expires: ${expiresAt.toISOString()}`);
+    // Redact email for logging
+    const redactedEmail = params.email.replace(/(^.).*(@.*$)/, '$1***$2');
+    console.log(`[MagicLink] Created token for ${redactedEmail}, expires: ${expiresAt.toISOString()}`);
     return token;
 }
 
@@ -96,7 +98,9 @@ export async function verifyMagicLinkToken(token: string): Promise<{
         .set({ isUsed: true, usedAt: new Date() })
         .where(eq(magicLinkTokens.id, tokenRecord.id));
 
-    console.log(`[MagicLink] Token verified for ${tokenRecord.email}`);
+    // Redact email for logging
+    const redactedEmail = tokenRecord.email.replace(/(^.).*(@.*$)/, '$1***$2');
+    console.log(`[MagicLink] Token verified for ${redactedEmail}`);
 
     return {
         valid: true,
@@ -114,9 +118,11 @@ export async function createSessionJWT(params: {
     sessionId?: string | null;
     loginMethod: 'magic_link' | 'siwe';
 }): Promise<string> {
-    const secret = new TextEncoder().encode(
-        ENV.jwtSecret || 'default-secret-change-in-production'
-    );
+    if (!ENV.jwtSecret) {
+        throw new Error('JWT_SECRET is not configured');
+    }
+
+    const secret = new TextEncoder().encode(ENV.jwtSecret);
 
     const jwt = await new jose.SignJWT({
         email: params.email,
@@ -129,7 +135,9 @@ export async function createSessionJWT(params: {
         .setSubject(params.email)
         .sign(secret);
 
-    console.log(`[MagicLink] Created JWT session for ${params.email}`);
+    // Redact email for logging (e***@domain.com)
+    const redactedEmail = params.email.replace(/(^.).*(@.*$)/, '$1***$2');
+    console.log(`[MagicLink] Created JWT session for ${redactedEmail}`);
     return jwt;
 }
 
@@ -146,9 +154,11 @@ export async function verifySessionJWT(token: string): Promise<{
     error?: string;
 }> {
     try {
-        const secret = new TextEncoder().encode(
-            ENV.jwtSecret || 'default-secret-change-in-production'
-        );
+        if (!ENV.jwtSecret) {
+            throw new Error('JWT_SECRET is not configured');
+        }
+
+        const secret = new TextEncoder().encode(ENV.jwtSecret);
 
         const { payload } = await jose.jwtVerify(token, secret);
 

@@ -42,7 +42,8 @@ export async function createSiweNonce(walletAddress?: string): Promise<string> {
         expiresAt,
     });
 
-    console.log(`[SIWE] Created nonce for ${walletAddress || 'unknown wallet'}`);
+    const redactedAddress = walletAddress ? `${walletAddress.substring(0, 6)}...${walletAddress.substring(walletAddress.length - 4)}` : 'unknown wallet';
+    console.log(`[SIWE] Created nonce for ${redactedAddress}`);
     return nonce;
 }
 
@@ -141,8 +142,10 @@ export async function verifySiweSignature(params: {
         )
         .limit(1);
 
+    const redactedAddress = address ? `${address.substring(0, 6)}...${address.substring(address.length - 4)}` : 'unknown wallet';
+
     if (!purchase) {
-        console.log(`[SIWE] Wallet ${address} has no completed purchases`);
+        console.log(`[SIWE] Wallet ${redactedAddress} has no completed purchases`);
         return {
             valid: true,
             hasPurchase: false,
@@ -150,7 +153,7 @@ export async function verifySiweSignature(params: {
         };
     }
 
-    console.log(`[SIWE] Wallet ${address} verified with purchase ${purchase.sessionId}`);
+    console.log(`[SIWE] Wallet ${redactedAddress} verified with purchase ${purchase.sessionId}`);
 
     return {
         valid: true,
