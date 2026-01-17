@@ -280,9 +280,9 @@ export default function Home() {
       <nav className="sticky top-6 z-40 mx-auto max-w-[95%] px-2 sm:px-4">
         <div className="border border-border bg-card/95 backdrop-blur-sm px-3 sm:px-5 py-2 sm:py-2.5 flex justify-between items-center">
           <a href="/" className="flex items-center gap-2 hover:opacity-80 transition flex-shrink-0">
-            <img src="/favicon.png" alt="VS" className="w-6 h-6 object-contain md:hidden" />
-            <span className="font-bold text-[10px] sm:text-sm tracking-tight font-mono md:hidden">VS<span className="text-primary hidden xs:inline">TRATEGY</span></span>
-            <span className="hidden md:block font-bold text-base tracking-tight">Validate<span className="text-primary">Strategy</span></span>
+            <img src="/favicon.png" alt="V8" className="w-6 h-6 object-contain md:hidden" />
+            <span className="font-bold text-[10px] sm:text-sm tracking-tight font-mono md:hidden">V<span className="text-primary hidden xs:inline">8</span></span>
+            <span className="hidden md:block font-bold text-base tracking-tight">Valid<span className="text-primary">8</span></span>
           </a>
 
           <div className="flex items-center gap-1.5 sm:gap-3 flex-wrap justify-end">
@@ -403,15 +403,15 @@ export default function Home() {
             <div className="flex justify-center mb-8">
               <div className="inline-flex items-center gap-2 border border-primary/40 bg-primary/5 px-4 py-1.5">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-primary">Instant Analysis · Results in Minutes</span>
+                <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-primary">Powered by Valid8 Engine™ · Results in Minutes</span>
               </div>
             </div>
 
             {/* Main Headline */}
             <div className="text-center mb-8">
               <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight md:tracking-tighter mb-6 leading-tight md:leading-[0.9]">
-                <span className="block text-foreground mb-2 md:mb-0">STOP GUESSING.</span>
-                <span className="block text-primary">VALIDATE STRATEGY.</span>
+                <span className="block text-foreground mb-2 md:mb-0">DON'T GUESS.</span>
+                <span className="block text-primary">VALID8.</span>
               </h1>
             </div>
 
