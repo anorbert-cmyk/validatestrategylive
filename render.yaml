@@ -66,7 +66,7 @@ services:
         sync: false
       - key: VITE_RECAPTCHA_SITE_KEY
         sync: false
-    autoDeploy: false
+    autoDeploy: true
 
   # Background Worker (Retry Queue)
   - type: worker
@@ -88,7 +88,7 @@ services:
         sync: false
       - key: VITE_APP_URL
         sync: false
-    autoDeploy: false
+    autoDeploy: true
 
   # Cron Job (Email Sequence)
   - type: cron
