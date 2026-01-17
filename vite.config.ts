@@ -24,7 +24,7 @@ export default defineConfig({
     sourcemap: true, // Enable source maps for debugging
     // Removed manualChunks - was causing React duplication with Radix UI
     // Let Rollup handle chunking automatically with dedupe
-    chunkSizeWarningLimit: 500,
+    chunkSizeWarningLimit: 600, // 573kB raw → 168kB gzip is acceptable
   },
   server: {
     host: true,
