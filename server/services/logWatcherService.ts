@@ -3,7 +3,7 @@ import path from "path";
 import { aiLogSentinel } from "./aiLogSentinel";
 import { notificationService } from "./notificationService";
 import crypto from "crypto";
-import { ENV } from "../_core/env";
+
 
 const ANALYSIS_FILE = path.join(process.cwd(), "server", "data", "auto_analysis.json");
 
@@ -115,8 +115,6 @@ async function processQueue() {
                     analysis: analysisText,
                     timestamp: Date.now()
                 };
-
-                saveCache();
 
                 saveCache();
 
