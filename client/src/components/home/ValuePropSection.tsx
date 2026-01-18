@@ -146,41 +146,36 @@ export function ValuePropSection() {
                             </p>
                         </div>
 
-                        <div className="space-y-8">
+                        <div className="space-y-6">
                             {[
                                 {
+                                    num: "01",
                                     title: "Swarm Consensus",
-                                    desc: "Agents must agree on a finding before it makes the report. Eliminates 99% of hallucinations.",
-                                    icon: Zap,
-                                    color: "text-cyan-700 dark:text-cyan-400"
+                                    desc: "Multiple agents must agree on a finding before it makes the report. This eliminates 99% of AI hallucinations."
                                 },
                                 {
+                                    num: "02",
                                     title: "24-Hour Deep Dive",
-                                    desc: "The swarm runs for hours, not seconds. Visiting 50+ competitor sites, reading Reddit threads, and analyzing pricing tables.",
-                                    icon: Brain,
-                                    color: "text-purple-700 dark:text-purple-400"
+                                    desc: "The research runs for hours, not seconds. Visiting 50+ competitor sites, reading forums, and analyzing pricing strategies."
                                 },
                                 {
+                                    num: "03",
                                     title: "Strategic Blueprint",
-                                    desc: "Output isn't just text. It's a structured roadmap with specific, actionable steps to crush your competition.",
-                                    icon: Target,
-                                    color: "text-green-700 dark:text-green-400"
+                                    desc: "Output isn't just text. It's a structured roadmap with specific, actionable steps for your business."
                                 }
                             ].map((item, idx) => (
                                 <motion.div
                                     key={idx}
-                                    initial={{ opacity: 0, x: 20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 0.5 + (idx * 0.2) }}
-                                    className="flex gap-4 group"
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.3 + (idx * 0.15) }}
+                                    className="group border-l-2 border-border hover:border-primary pl-6 py-2 transition-colors"
                                 >
-                                    <div className={`mt-1 w-10 h-10 rounded bg-muted dark:bg-[#0a0a0a] border border-border flex items-center justify-center shrink-0 group-hover:border-border/80 dark:group-hover:border-white/30 transition-colors`}>
-                                        <item.icon className={`w-5 h-5 ${item.color}`} />
+                                    <div className="flex items-baseline gap-3 mb-1">
+                                        <span className="text-xs font-mono text-muted-foreground">{item.num}</span>
+                                        <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">{item.title}</h3>
                                     </div>
-                                    <div>
-                                        <h3 className="text-lg font-bold text-foreground mb-1 group-hover:text-cyan-700 dark:group-hover:text-cyan-300 transition-colors">{item.title}</h3>
-                                        <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
-                                    </div>
+                                    <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
                                 </motion.div>
                             ))}
                         </div>
