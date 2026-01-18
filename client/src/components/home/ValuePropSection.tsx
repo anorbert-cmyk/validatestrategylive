@@ -3,14 +3,14 @@ import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { motion, AnimatePresence } from "framer-motion";
 import { Brain, Search, ShieldAlert, Target, Zap, BarChart3, Database } from "lucide-react";
 
-// Agent Definitions
+// Agent Definitions - Colors chosen for WCAG AA contrast (4.5:1) in both modes
 const AGENTS = [
-    { id: "research", icon: Search, label: "Deep Research", color: "text-blue-500 dark:text-blue-400", bg: "bg-blue-500/10 dark:bg-blue-500/20", border: "border-blue-500/30 dark:border-blue-500/50" },
-    { id: "market", icon: BarChart3, label: "Market Analyst", color: "text-purple-500 dark:text-purple-400", bg: "bg-purple-500/10 dark:bg-purple-500/20", border: "border-purple-500/30 dark:border-purple-500/50" },
-    { id: "competitor", icon: Target, label: "Competitor Spy", color: "text-red-500 dark:text-red-400", bg: "bg-red-500/10 dark:bg-red-500/20", border: "border-red-500/30 dark:border-red-500/50" },
-    { id: "tech", icon: Database, label: "Tech Auditor", color: "text-cyan-600 dark:text-cyan-400", bg: "bg-cyan-500/10 dark:bg-cyan-500/20", border: "border-cyan-500/30 dark:border-cyan-500/50" },
-    { id: "user", icon: Brain, label: "User Psychology", color: "text-pink-500 dark:text-pink-400", bg: "bg-pink-500/10 dark:bg-pink-500/20", border: "border-pink-500/30 dark:border-pink-500/50" },
-    { id: "risk", icon: ShieldAlert, label: "Risk Assessor", color: "text-yellow-600 dark:text-yellow-400", bg: "bg-yellow-500/10 dark:bg-yellow-500/20", border: "border-yellow-500/30 dark:border-yellow-500/50" },
+    { id: "research", icon: Search, label: "Deep Research", color: "text-blue-700 dark:text-blue-400", bg: "bg-blue-500/10 dark:bg-blue-500/20", border: "border-blue-600/40 dark:border-blue-500/50" },
+    { id: "market", icon: BarChart3, label: "Market Analyst", color: "text-purple-700 dark:text-purple-400", bg: "bg-purple-500/10 dark:bg-purple-500/20", border: "border-purple-600/40 dark:border-purple-500/50" },
+    { id: "competitor", icon: Target, label: "Competitor Spy", color: "text-red-700 dark:text-red-400", bg: "bg-red-500/10 dark:bg-red-500/20", border: "border-red-600/40 dark:border-red-500/50" },
+    { id: "tech", icon: Database, label: "Tech Auditor", color: "text-cyan-700 dark:text-cyan-400", bg: "bg-cyan-500/10 dark:bg-cyan-500/20", border: "border-cyan-600/40 dark:border-cyan-500/50" },
+    { id: "user", icon: Brain, label: "User Psychology", color: "text-pink-700 dark:text-pink-400", bg: "bg-pink-500/10 dark:bg-pink-500/20", border: "border-pink-600/40 dark:border-pink-500/50" },
+    { id: "risk", icon: ShieldAlert, label: "Risk Assessor", color: "text-amber-700 dark:text-amber-400", bg: "bg-amber-500/10 dark:bg-amber-500/20", border: "border-amber-600/40 dark:border-amber-500/50" },
 ];
 
 export function ValuePropSection() {
@@ -56,8 +56,8 @@ export function ValuePropSection() {
                                 className="absolute inset-2 rounded-full border-b border-purple-500/50 dark:border-purple-400/50"
                             />
                             <div className="text-center">
-                                <Zap className="w-8 h-8 text-cyan-600 dark:text-cyan-400 mx-auto mb-1 fill-cyan-500/20 dark:fill-cyan-400/20" />
-                                <div className="text-[10px] uppercase tracking-widest text-cyan-700 dark:text-cyan-200 font-mono">CORE</div>
+                                <Zap className="w-8 h-8 text-cyan-700 dark:text-cyan-400 mx-auto mb-1 fill-cyan-500/20 dark:fill-cyan-400/20" />
+                                <div className="text-[10px] uppercase tracking-widest text-cyan-800 dark:text-cyan-200 font-mono">CORE</div>
                             </div>
                         </div>
 
@@ -120,13 +120,13 @@ export function ValuePropSection() {
                             })}
                         </div>
 
-                        {/* Floating HUD Elements - Decorational */}
-                        <div className="absolute top-10 left-10 font-mono text-[10px] text-cyan-600/50 dark:text-cyan-500/50">
+                        {/* Floating HUD Elements - Decorational (AA compliant text) */}
+                        <div className="absolute top-10 left-10 font-mono text-[10px] text-cyan-800/70 dark:text-cyan-400/60">
                             <div>SYS.METRICS</div>
                             <div>CPU: 12%</div>
                             <div>MEM: 4.2GB</div>
                         </div>
-                        <div className="absolute bottom-10 right-10 font-mono text-[10px] text-purple-600/50 dark:text-purple-500/50 text-right">
+                        <div className="absolute bottom-10 right-10 font-mono text-[10px] text-purple-800/70 dark:text-purple-400/60 text-right">
                             <div>NET.STATUS</div>
                             <div>CONN: SECURE</div>
                             <div>LATENCY: 12ms</div>
@@ -139,7 +139,7 @@ export function ValuePropSection() {
                         <div className="space-y-4">
                             <h2 className="text-4xl md:text-5xl font-bold tracking-tighter text-foreground">
                                 NOT A WRAPPER. <br />
-                                <span className="text-cyan-600 dark:text-cyan-400">A RESEARCH TEAM.</span>
+                                <span className="text-cyan-700 dark:text-cyan-400">A RESEARCH TEAM.</span>
                             </h2>
                             <p className="text-lg text-muted-foreground leading-relaxed max-w-lg">
                                 While other tools wrap a single LLM prompt, Valid8 spins up <span className="text-foreground font-medium">six specialized autonomous agents</span>. They debate, cross-reference, and validate each other's findings.
@@ -152,19 +152,19 @@ export function ValuePropSection() {
                                     title: "Swarm Consensus",
                                     desc: "Agents must agree on a finding before it makes the report. Eliminates 99% of hallucinations.",
                                     icon: Zap,
-                                    color: "text-cyan-600 dark:text-cyan-400"
+                                    color: "text-cyan-700 dark:text-cyan-400"
                                 },
                                 {
                                     title: "24-Hour Deep Dive",
                                     desc: "The swarm runs for hours, not seconds. Visiting 50+ competitor sites, reading Reddit threads, and analyzing pricing tables.",
                                     icon: Brain,
-                                    color: "text-purple-600 dark:text-purple-400"
+                                    color: "text-purple-700 dark:text-purple-400"
                                 },
                                 {
                                     title: "Strategic Blueprint",
                                     desc: "Output isn't just text. It's a structured roadmap with specific, actionable steps to crush your competition.",
                                     icon: Target,
-                                    color: "text-green-600 dark:text-green-400"
+                                    color: "text-green-700 dark:text-green-400"
                                 }
                             ].map((item, idx) => (
                                 <motion.div
@@ -178,7 +178,7 @@ export function ValuePropSection() {
                                         <item.icon className={`w-5 h-5 ${item.color}`} />
                                     </div>
                                     <div>
-                                        <h3 className="text-lg font-bold text-foreground mb-1 group-hover:text-cyan-600 dark:group-hover:text-cyan-200 transition-colors">{item.title}</h3>
+                                        <h3 className="text-lg font-bold text-foreground mb-1 group-hover:text-cyan-700 dark:group-hover:text-cyan-300 transition-colors">{item.title}</h3>
                                         <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
                                     </div>
                                 </motion.div>
